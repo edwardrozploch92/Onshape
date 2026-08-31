@@ -10,6 +10,19 @@ This is a standalone tool, not an Onshape product feature: it does not
 FeatureScript features (if enabled on your account) are toggled from your
 Onshape account settings, not from here.
 
+## Status: fallback tool
+
+Onshape now hosts its own official remote MCP server for FeatureScript AI
+(`https://fs-mcp.labs.onshape.app/mcp`), connected via Settings → Connectors
+in Claude. That server is the primary way to work with FeatureScript AI —
+it authenticates via OAuth (no local API keys to manage) and is maintained
+directly by Onshape.
+
+This CLI is kept in the repo as a **fallback**: for offline use, scripting
+outside an MCP-capable client, or if the hosted server is ever unavailable.
+It requires you to manage your own Onshape API keys and Anthropic API key
+locally (see Setup below).
+
 ## Setup
 
 1. Install dependencies:

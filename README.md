@@ -1,0 +1,62 @@
+# onshape-featurescript-ai
+
+A small CLI that pairs the Onshape REST API with an LLM (Claude) to generate,
+explain, and debug [FeatureScript](https://cad.onshape.com/FsDoc/) — Onshape's
+parametric CAD scripting language — and optionally push results straight into
+a Feature Studio.
+
+This is a standalone tool, not an Onshape product feature: it does not
+"enable" anything inside the Onshape app itself. Onshape's own Labs / AI
+FeatureScript features (if enabled on your account) are toggled from your
+Onshape account settings, not from here.
+
+## Setup
+
+1. Install dependencies:
+   ```
+   pip install -e .
+   ```
+2. Get Onshape API keys at https://dev-portal.onshape.com/keys (scoped to
+   read/write documents as needed).
+3. Get an Anthropic API key at https://console.anthropic.com/settings/keys.
+4. Copy `.env.example` to `.env` and fill in all four values. `.env` is
+   gitignored — never commit real keys.
+
+## Usage
+
+```
+# Generate a new feature from a description
+featurescript-ai generate "an extrude feature that pockets a hexagonal array of holes" -o hex_pockets.fs
+
+# Explain existing FeatureScript
+featurescript-ai explain path/to/feature.fs
+
+# Debug a failing feature, given the error Onshape reported
+featurescript-ai debug path/to/feature.fs --error "Query has no matching entities"
+
+# Pull the current source of a Feature Studio
+featurescript-ai pull --document-id <did> --workspace-id <wid> --element-id <eid>
+
+# Push a local file into a Feature Studio
+featurescript-ai push hex_pockets.fs --document-id <did> --workspace-id <wid> --element-id <eid>
+```
+
+Document/workspace/element IDs come from an Onshape document's URL:
+`https://cad.onshape.com/documents/{did}/w/{wid}/e/{eid}`.
+
+## Notes
+
+- Onshape API authentication uses HMAC-SHA256-signed requests
+  (`onshape_featurescript_ai/onshape_auth.py`), per Onshape's documented
+  API-key scheme.
+- The `push`/`pull` commands target Onshape's Feature Studio endpoints;
+  verify the exact path against your account's API Explorer
+  (Developer Portal → API Explorer) if Onshape has changed it, since API
+  paths have shifted across versions.
+
+## Tests
+
+```
+pip install -e ".[dev]" pytest 2>/dev/null || pip install pytest
+pytest
+```

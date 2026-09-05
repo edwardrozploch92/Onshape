@@ -23,6 +23,24 @@ outside an MCP-capable client, or if the hosted server is ever unavailable.
 It requires you to manage your own Onshape API keys and Anthropic API key
 locally (see Setup below).
 
+## StackTech drawer separators
+
+`stacktech/` holds a standalone FeatureScript feature plus the research behind it:
+
+- `stacktech/stacktech_separators.fs` – the **StackTech Separators** custom
+  feature. Pick the ToughBuilt StackTech drawer, choose which side-wall
+  receiver the full-width side-to-side bar sits in, and optionally add
+  front-to-back bars that tongue into the front/back wall and half-lap onto
+  the side-to-side bar. Every drawer's interior size and receiver count is a
+  single hard-coded table (`drawerSpec()`) at the top of the file.
+- `stacktech/STACKTECH_DATA.md` – interior dimensions, receiver counts and
+  existing CAD/STL links for every StackTech drawer and box, with sources and
+  confidence tags.
+
+To use it: create a Feature Studio in your Onshape document, paste the `.fs`
+file in (or push it with `featurescript-ai push`), then add the feature from
+the Part Studio custom-feature toolbar. Tested against FeatureScript std 3070.
+
 ## Setup
 
 1. Install dependencies:

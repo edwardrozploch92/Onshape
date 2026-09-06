@@ -5,10 +5,17 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  * StackTech Separators
  *
  * Builds 3D-printable divider bars for ToughBuilt StackTech drawers:
- *   - a full-width SIDE-TO-SIDE separator that drops into the female
- *     receivers on the drawer side walls, and
- *   - FRONT-TO-BACK separators that tongue into the front or back wall and
- *     hook over the side-to-side separator with a half-lap (egg-crate) joint.
+ *   - a full-width SIDE-TO-SIDE separator whose T-shaped ends slide down into
+ *     the female edge mounts on the drawer side walls, and
+ *   - FRONT-TO-BACK separators that T into the front or back wall mount and
+ *     plug into vertical T-slots cut through the side-to-side separator.
+ *
+ * Separator construction (measured from the OEM ToughBuilt divider):
+ *   - overall thickness 0.265" (perimeter rails), recessed web 0.095" thick
+ *   - wall end: T connector, neck sized to the 0.166" mount channel, head
+ *     sized to the 0.29" hollow interior of the mount
+ *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
+ *     in the mating separator, retained by a 0.265" head on the far side
  *
  * Coordinate system: X = side to side (width), Y = front to back (depth,
  * Y = 0 at the front wall), Z = up (Z = 0 on the drawer floor).
@@ -62,7 +69,7 @@ export enum FrontToBackAnchor
  *   width      : side to side
  *   depth      : front to back
  *   height     : floor to rim
- *   sideSlots  : female receivers on each side wall, counted front to back
+ *   sideSlots  : female edge mounts on each side wall, counted front to back
  *   positions  : front-to-back divider positions across the width
  *                (2 for the stock 3-column grid, 3 for the 4-column grid)
  */
@@ -85,21 +92,28 @@ function drawerSpec(drawer is StackTechDrawer) returns map
     return { "label" : "Rolling 2-Drawer Locking Box (bottom)", "width" : 430 * millimeter, "depth" : 398 * millimeter, "height" : 273 * millimeter, "sideSlots" : 3, "positions" : 5 };
 }
 
-const END_TONGUE = "TONGUE";
-const END_NOTCH = "NOTCH";
-const END_PLAIN = "PLAIN";
+// End connector types
+const END_NONE = "NONE";
+const END_WALL = "WALL"; // T into a drawer-wall edge mount
+const END_SLOT = "SLOT"; // T through a slot in another separator
 
 const SLOT_BOUNDS = { (unitless) : [1, 1, 8] } as IntegerBoundSpec;
 const SECOND_SLOT_BOUNDS = { (unitless) : [1, 2, 8] } as IntegerBoundSpec;
 const COUNT_BOUNDS = { (unitless) : [1, 1, 8] } as IntegerBoundSpec;
 const POSITION_BOUNDS = { (unitless) : [1, 2, 8] } as IntegerBoundSpec;
 
-const THICKNESS_BOUNDS = { (meter) : [0.0005, 0.0024, 0.01], (millimeter) : 2.4, (centimeter) : 0.24, (inch) : 0.0945, (foot) : 0.00787, (yard) : 0.00262 } as LengthBoundSpec;
-const END_CLEARANCE_BOUNDS = { (meter) : [0, 0.0005, 0.02], (millimeter) : 0.5, (centimeter) : 0.05, (inch) : 0.02, (foot) : 0.00164, (yard) : 0.00055 } as LengthBoundSpec;
-const TOP_CLEARANCE_BOUNDS = { (meter) : [0, 0.004, 0.1], (millimeter) : 4, (centimeter) : 0.4, (inch) : 0.157, (foot) : 0.0131, (yard) : 0.00437 } as LengthBoundSpec;
-const TONGUE_DEPTH_BOUNDS = { (meter) : [0, 0.003, 0.03], (millimeter) : 3, (centimeter) : 0.3, (inch) : 0.118, (foot) : 0.00984, (yard) : 0.00328 } as LengthBoundSpec;
-const TONGUE_HEIGHT_BOUNDS = { (meter) : [0, 0, 0.5], (millimeter) : 0, (centimeter) : 0, (inch) : 0, (foot) : 0, (yard) : 0 } as LengthBoundSpec;
-const JOINT_CLEARANCE_BOUNDS = { (meter) : [0, 0.0003, 0.005], (millimeter) : 0.3, (centimeter) : 0.03, (inch) : 0.0118, (foot) : 0.00098, (yard) : 0.00033 } as LengthBoundSpec;
+// Measured OEM separator / mount dimensions (inches) are the defaults.
+const THICKNESS_BOUNDS = { (meter) : [0.000508, 0.006731, 0.0127], (millimeter) : 6.731, (centimeter) : 0.6731, (inch) : 0.265, (foot) : 0.02208, (yard) : 0.00736 } as LengthBoundSpec;
+const WEB_BOUNDS = { (meter) : [0.000254, 0.002413, 0.00762], (millimeter) : 2.413, (centimeter) : 0.2413, (inch) : 0.095, (foot) : 0.00792, (yard) : 0.00264 } as LengthBoundSpec;
+const T_SLOT_BOUNDS = { (meter) : [0.000254, 0.002413, 0.00762], (millimeter) : 2.413, (centimeter) : 0.2413, (inch) : 0.095, (foot) : 0.00792, (yard) : 0.00264 } as LengthBoundSpec;
+const MOUNT_HOLLOW_BOUNDS = { (meter) : [0.00127, 0.007366, 0.0254], (millimeter) : 7.366, (centimeter) : 0.7366, (inch) : 0.29, (foot) : 0.02417, (yard) : 0.00806 } as LengthBoundSpec;
+const MOUNT_CHANNEL_BOUNDS = { (meter) : [0.000508, 0.0042164, 0.0127], (millimeter) : 4.2164, (centimeter) : 0.42164, (inch) : 0.166, (foot) : 0.01383, (yard) : 0.00461 } as LengthBoundSpec;
+const HEAD_LENGTH_BOUNDS = { (meter) : [0.00127, 0.00635, 0.0254], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
+const NECK_LENGTH_BOUNDS = { (meter) : [0.000508, 0.00254, 0.0127], (millimeter) : 2.54, (centimeter) : 0.254, (inch) : 0.10, (foot) : 0.00833, (yard) : 0.00278 } as LengthBoundSpec;
+const RAIL_WIDTH_BOUNDS = { (meter) : [0, 0.00635, 0.0508], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
+const CLEARANCE_BOUNDS = { (meter) : [0, 0.0003175, 0.00127], (millimeter) : 0.3175, (centimeter) : 0.03175, (inch) : 0.0125, (foot) : 0.00104, (yard) : 0.000347 } as LengthBoundSpec;
+const TOP_CLEARANCE_BOUNDS = { (meter) : [0, 0.004, 0.1016], (millimeter) : 4, (centimeter) : 0.4, (inch) : 0.157, (foot) : 0.01312, (yard) : 0.00437 } as LengthBoundSpec;
+const END_CLEARANCE_BOUNDS = { (meter) : [0, 0.000508, 0.0127], (millimeter) : 0.508, (centimeter) : 0.0508, (inch) : 0.02, (foot) : 0.00167, (yard) : 0.000556 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -146,28 +160,43 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Separator thickness" }
             isLength(definition.thickness, THICKNESS_BOUNDS);
 
+            annotation { "Name" : "Recessed web thickness" }
+            isLength(definition.webThickness, WEB_BOUNDS);
+
+            annotation { "Name" : "Separator T-slot interior" }
+            isLength(definition.tSlotInterior, T_SLOT_BOUNDS);
+
+            annotation { "Name" : "Edge mount hollow interior" }
+            isLength(definition.mountHollow, MOUNT_HOLLOW_BOUNDS);
+
+            annotation { "Name" : "Edge mount channel width" }
+            isLength(definition.mountChannel, MOUNT_CHANNEL_BOUNDS);
+
+            annotation { "Name" : "T head length" }
+            isLength(definition.headLength, HEAD_LENGTH_BOUNDS);
+
+            annotation { "Name" : "T neck length (mount wall thickness)" }
+            isLength(definition.neckLength, NECK_LENGTH_BOUNDS);
+
+            annotation { "Name" : "Rail width around the web (0 = solid plate)" }
+            isLength(definition.railWidth, RAIL_WIDTH_BOUNDS);
+
+            annotation { "Name" : "Fit clearance per side" }
+            isLength(definition.clearance, CLEARANCE_BOUNDS);
+
             annotation { "Name" : "Clearance below the drawer rim" }
             isLength(definition.topClearance, TOP_CLEARANCE_BOUNDS);
 
             annotation { "Name" : "Clearance at each wall" }
             isLength(definition.endClearance, END_CLEARANCE_BOUNDS);
-
-            annotation { "Name" : "Wall tab depth (0 = none)" }
-            isLength(definition.tongueDepth, TONGUE_DEPTH_BOUNDS);
-
-            annotation { "Name" : "Wall tab height from the top (0 = full height)" }
-            isLength(definition.tongueHeight, TONGUE_HEIGHT_BOUNDS);
-
-            annotation { "Name" : "Joint clearance" }
-            isLength(definition.jointClearance, JOINT_CLEARANCE_BOUNDS);
         }
     }
     {
         const spec = drawerSpec(definition.drawer);
-        const zero = 0 * millimeter;
+        const zero = 0 * inch;
 
         if (definition.sideSlot > spec.sideSlots)
-            throw regenError("The " ~ spec.label ~ " has only " ~ spec.sideSlots ~ " receivers per side wall.", ["sideSlot"]);
+            throw regenError("The " ~ spec.label ~ " has only " ~ spec.sideSlots ~ " edge mounts per side wall.", ["sideSlot"]);
 
         const wantSS = definition.kind != SeparatorKind.FRONT_TO_BACK;
         const wantFB = definition.kind != SeparatorKind.SIDE_TO_SIDE;
@@ -179,35 +208,54 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             if (definition.secondSideSlot <= definition.sideSlot)
                 throw regenError("The second slot must be further back than the first slot.", ["secondSideSlot"]);
             if (definition.secondSideSlot > spec.sideSlots)
-                throw regenError("The " ~ spec.label ~ " has only " ~ spec.sideSlots ~ " receivers per side wall.", ["secondSideSlot"]);
+                throw regenError("The " ~ spec.label ~ " has only " ~ spec.sideSlots ~ " edge mounts per side wall.", ["secondSideSlot"]);
             slots = append(slots, definition.secondSideSlot);
         }
 
         const positions = definition.overridePositions ? definition.positions : spec.positions;
-        const t = definition.thickness;
+        const T = definition.thickness;
+        const web = definition.webThickness;
+        const c = definition.clearance;
         const h = spec.height - definition.topClearance;
-        if (h <= t)
+        if (h <= T)
             throw regenError("Rim clearance leaves no separator height.", ["topClearance"]);
+        if (web >= T)
+            throw regenError("The web must be thinner than the separator.", ["webThickness"]);
+
+        // Wall T: head fills the mount hollow, neck fills the mount channel.
+        const wallHeadT = min(T, definition.mountHollow - 2 * c);
+        const wallNeckT = min(T, definition.mountChannel - 2 * c);
+        if (wallNeckT <= zero || wallHeadT <= zero)
+            throw regenError("Edge mount dimensions are smaller than twice the fit clearance.", ["mountChannel"]);
+        // Separator T-slot: the mating separator's web passes through a slot in this one.
+        const slotWidth = definition.tSlotInterior + 2 * c;
+        const slotNeckT = min(T, definition.tSlotInterior);
+        const slotNeckL = T + 2 * c;
+        const endLen = definition.neckLength + definition.headLength;
 
         const pitch = spec.depth / (spec.sideSlots + 1);
         const colPitch = spec.width / (positions + 1);
         const ec = definition.endClearance;
-        const notchWidth = t + definition.jointClearance;
-        const notchDepth = h / 2;
-        const tongueZ1 = h;
-        const tongueZ0 = definition.tongueHeight <= zero ? zero : max(zero, h - definition.tongueHeight);
-        const wallEnd = definition.tongueDepth > zero ? END_TONGUE : END_PLAIN;
 
         const common = {
             "height" : h,
-            "thickness" : t,
-            "tongueDepth" : definition.tongueDepth,
-            "tongueZ0" : tongueZ0,
-            "tongueZ1" : tongueZ1,
-            "topNotches" : [],
-            "topNotchDepth" : notchDepth,
-            "bottomNotchWidth" : notchWidth,
-            "bottomNotchDepth" : notchDepth
+            "thickness" : T,
+            "webThickness" : web,
+            "railWidth" : definition.railWidth,
+            "wallNeckThickness" : wallNeckT,
+            "wallNeckLength" : definition.neckLength,
+            "wallHeadThickness" : wallHeadT,
+            "slotNeckThickness" : slotNeckT,
+            "slotNeckLength" : slotNeckL,
+            "slotHeadThickness" : T,
+            "headLength" : definition.headLength,
+            "faceSlots" : [],
+            "faceSlotWidth" : slotWidth,
+            // T-slots stay closed at the bottom so the separator remains one piece;
+            // the mating tongue starts just above this floor.
+            "slotFloor" : max(definition.railWidth, 0.1 * inch),
+            "clearance" : c,
+            "zDir" : vector(0, 0, 1)
         };
 
         if (definition.showEnvelope)
@@ -225,23 +273,23 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
 
         if (wantSS)
         {
-            var topNotches = [];
+            const xStart = ec + endLen;
+            const bodyLength = spec.width - 2 * xStart;
+            if (bodyLength <= 2 * definition.railWidth)
+                throw regenError("Side-to-side separator body would be too short.", ["headLength"]);
+            var faceSlots = [];
             for (var j = 1; j <= positions; j += 1)
-            {
-                const u = j * colPitch - ec;
-                topNotches = append(topNotches, [u - notchWidth / 2, u + notchWidth / 2]);
-            }
+                faceSlots = append(faceSlots, j * colPitch - xStart);
             for (var k in slots)
             {
-                const yc = k * pitch;
                 createSeparator(context, id + ("ss" ~ k), mergeMaps(common, {
-                    "origin" : vector(ec, yc + t / 2, zero),
-                    "xDir" : vector(1, 0, 0),
-                    "normal" : vector(0, -1, 0),
-                    "length" : spec.width - 2 * ec,
-                    "leftEnd" : wallEnd,
-                    "rightEnd" : wallEnd,
-                    "topNotches" : topNotches,
+                    "origin" : vector(xStart, k * pitch, zero),
+                    "uDir" : vector(1, 0, 0),
+                    "vDir" : vector(0, 1, 0),
+                    "bodyLength" : bodyLength,
+                    "leftEnd" : END_WALL,
+                    "rightEnd" : END_WALL,
+                    "faceSlots" : faceSlots,
                     "name" : "StackTech side-to-side separator - " ~ spec.label ~ " - slot " ~ k
                 }));
             }
@@ -252,45 +300,44 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             const count = min(definition.frontToBackCount, positions);
             const yFirst = slots[0] * pitch;
             var yStart;
-            var length;
+            var bodyLength;
             var leftEnd;
             var rightEnd;
             var runLabel;
             if (definition.anchor == FrontToBackAnchor.FROM_FRONT_WALL)
             {
-                yStart = ec;
-                length = (yFirst + notchWidth / 2) - yStart;
-                leftEnd = wallEnd;
-                rightEnd = END_NOTCH;
+                yStart = ec + endLen;
+                bodyLength = (yFirst - T / 2 - c) - yStart;
+                leftEnd = END_WALL;
+                rightEnd = END_SLOT;
                 runLabel = "front wall to slot " ~ slots[0];
             }
             else if (definition.anchor == FrontToBackAnchor.FROM_BACK_WALL)
             {
-                yStart = yFirst - notchWidth / 2;
-                length = (spec.depth - ec) - yStart;
-                leftEnd = END_NOTCH;
-                rightEnd = wallEnd;
+                yStart = yFirst + T / 2 + c;
+                bodyLength = (spec.depth - ec - endLen) - yStart;
+                leftEnd = END_SLOT;
+                rightEnd = END_WALL;
                 runLabel = "slot " ~ slots[0] ~ " to back wall";
             }
             else
             {
-                yStart = yFirst - notchWidth / 2;
-                length = (slots[1] * pitch + notchWidth / 2) - yStart;
-                leftEnd = END_NOTCH;
-                rightEnd = END_NOTCH;
+                yStart = yFirst + T / 2 + c;
+                bodyLength = (slots[1] * pitch - T / 2 - c) - yStart;
+                leftEnd = END_SLOT;
+                rightEnd = END_SLOT;
                 runLabel = "slot " ~ slots[0] ~ " to slot " ~ slots[1];
             }
-            if (length <= 3 * notchWidth)
-                throw regenError("Front-to-back separator would be too short for its joints.", ["sideSlot"]);
+            if (bodyLength <= 2 * definition.railWidth + endLen)
+                throw regenError("Front-to-back separator would be too short for its connectors.", ["sideSlot"]);
 
             for (var j = 1; j <= count; j += 1)
             {
-                const xc = j * colPitch;
                 createSeparator(context, id + ("fb" ~ j), mergeMaps(common, {
-                    "origin" : vector(xc - t / 2, yStart, zero),
-                    "xDir" : vector(0, 1, 0),
-                    "normal" : vector(1, 0, 0),
-                    "length" : length,
+                    "origin" : vector(j * colPitch, yStart, zero),
+                    "uDir" : vector(0, 1, 0),
+                    "vDir" : vector(1, 0, 0),
+                    "bodyLength" : bodyLength,
                     "leftEnd" : leftEnd,
                     "rightEnd" : rightEnd,
                     "name" : "StackTech front-to-back separator - " ~ spec.label ~ " - " ~ runLabel ~ " - position " ~ j
@@ -307,116 +354,124 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "overridePositions" : false,
         "positions" : 2,
         "showEnvelope" : false,
-        "thickness" : 2.4 * millimeter,
-        "topClearance" : 4 * millimeter,
-        "endClearance" : 0.5 * millimeter,
-        "tongueDepth" : 3 * millimeter,
-        "tongueHeight" : 0 * millimeter,
-        "jointClearance" : 0.3 * millimeter
+        "thickness" : 0.265 * inch,
+        "webThickness" : 0.095 * inch,
+        "tSlotInterior" : 0.095 * inch,
+        "mountHollow" : 0.29 * inch,
+        "mountChannel" : 0.166 * inch,
+        "headLength" : 0.25 * inch,
+        "neckLength" : 0.10 * inch,
+        "railWidth" : 0.25 * inch,
+        "clearance" : 0.0125 * inch,
+        "topClearance" : 0.157 * inch,
+        "endClearance" : 0.02 * inch
     });
 
 /**
- * Sketches the side profile of one separator on the plane described by
- * p.origin / p.normal / p.xDir, extrudes it by p.thickness and names the body.
- * Profile coordinates: u along the separator (0 at the plate start), v up.
+ * Builds one separator as a single body.
+ * Local coordinates: u along the separator (0 at the body start, p.bodyLength at
+ * the body end), v across the thickness (0 on the mid-plane), z up from the floor.
+ *   p.origin / p.uDir / p.vDir / p.zDir : placement
+ *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL or END_SLOT
+ *   p.faceSlots                         : u positions of T-slots cut through this separator
  */
 function createSeparator(context is Context, id is Id, p is map)
 {
-    const pts = separatorProfile(p);
-    if (size(pts) < 5)
-        throw regenError("Separator profile is degenerate.");
+    const zero = 0 * inch;
+    const eps = 0.01 * inch;
+    const L = p.bodyLength;
+    const h = p.height;
+    const T = p.thickness;
+    const rw = p.railWidth;
 
-    const sketch = newSketchOnPlane(context, id + "sketch", {
-        "sketchPlane" : plane(p.origin, p.normal, p.xDir)
-    });
-    skPolyline(sketch, "profile", { "points" : pts });
-    skSolve(sketch);
+    var pieces = [id + "body"];
+    localCuboid(context, id + "body", p, zero, L, -T / 2, T / 2, zero, h);
 
-    opExtrude(context, id + "extrude", {
-        "entities" : qSketchRegion(id + "sketch"),
-        "direction" : p.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : p.thickness
-    });
-    opDeleteBodies(context, id + "deleteSketch", {
-        "entities" : qCreatedBy(id + "sketch", EntityType.BODY)
-    });
+    // Recess both faces down to the web, leaving perimeter rails.
+    if (rw > zero && L > 2 * rw + eps && h > 2 * rw + eps)
+    {
+        localCuboid(context, id + "recessA", p, rw, L - rw, p.webThickness / 2, T / 2 + eps, rw, h - rw);
+        localCuboid(context, id + "recessB", p, rw, L - rw, -T / 2 - eps, -p.webThickness / 2, rw, h - rw);
+        opBoolean(context, id + "recess", {
+            "tools" : qUnion([qCreatedBy(id + "recessA", EntityType.BODY), qCreatedBy(id + "recessB", EntityType.BODY)]),
+            "targets" : qCreatedBy(id + "body", EntityType.BODY),
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+    }
+
+    pieces = concatenateArrays([pieces, endConnector(context, id + "left", p, p.leftEnd, -1)]);
+    pieces = concatenateArrays([pieces, endConnector(context, id + "right", p, p.rightEnd, 1)]);
+
+    var queries = [];
+    for (var pieceId in pieces)
+        queries = append(queries, qCreatedBy(pieceId, EntityType.BODY));
+    const bodyQuery = qUnion(queries);
+
+    if (size(pieces) > 1)
+    {
+        opBoolean(context, id + "union", {
+            "tools" : bodyQuery,
+            "operationType" : BooleanOperationType.UNION
+        });
+    }
+
+    // Vertical T-slots through the full thickness for mating separators,
+    // open at the top and closed at the slot floor.
+    if (size(p.faceSlots) > 0)
+    {
+        var cuts = [];
+        for (var i = 0; i < size(p.faceSlots); i += 1)
+        {
+            const u = p.faceSlots[i];
+            const cutId = id + ("slot" ~ i);
+            localCuboid(context, cutId, p, u - p.faceSlotWidth / 2, u + p.faceSlotWidth / 2, -T / 2 - eps, T / 2 + eps, p.slotFloor, h + eps);
+            cuts = append(cuts, qCreatedBy(cutId, EntityType.BODY));
+        }
+        opBoolean(context, id + "slots", {
+            "tools" : qUnion(cuts),
+            "targets" : bodyQuery,
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+    }
+
     setProperty(context, {
-        "entities" : qCreatedBy(id + "extrude", EntityType.BODY),
+        "entities" : bodyQuery,
         "propertyType" : PropertyType.NAME,
         "value" : p.name
     });
 }
 
 /**
- * Closed polyline (counter-clockwise) for a separator: a length x height
- * plate with optional wall tongues sticking out of either end, half-lap
- * notches cut up from the bottom at either end, and half-lap notches cut
- * down from the top edge at p.topNotches ([u0, u1] pairs, ascending).
+ * Adds a T connector (neck + head) to one end of a separator.
+ * dir = -1 for the u = 0 end, +1 for the u = bodyLength end.
+ * Returns the ids of the pieces created so the caller can union them.
  */
-function separatorProfile(p is map) returns array
+function endConnector(context is Context, id is Id, p is map, endType is string, dir is number) returns array
 {
-    const zero = 0 * millimeter;
-    const L = p.length;
-    const h = p.height;
-    const nw = p.bottomNotchWidth;
-    const nd = p.bottomNotchDepth;
-    const td = p.tongueDepth;
-    const leftTongue = p.leftEnd == END_TONGUE && td > zero;
-    const rightTongue = p.rightEnd == END_TONGUE && td > zero;
-    const leftNotch = p.leftEnd == END_NOTCH;
-    const rightNotch = p.rightEnd == END_NOTCH;
+    if (endType == END_NONE)
+        return [];
+    const zero = 0 * inch;
+    const overlap = 0.02 * inch;
+    const base = dir < 0 ? zero : p.bodyLength;
+    const neckT = endType == END_WALL ? p.wallNeckThickness : p.slotNeckThickness;
+    const neckL = endType == END_WALL ? p.wallNeckLength : p.slotNeckLength;
+    const headT = endType == END_WALL ? p.wallHeadThickness : p.slotHeadThickness;
+    const headL = p.headLength;
+    // A tongue that drops into another separator's T-slot stops above the slot floor.
+    const z0 = endType == END_WALL ? zero : p.slotFloor + p.clearance;
 
-    var pts = [];
-    const startV = leftNotch ? nd : zero;
-    pts = addPoint(pts, vector(zero, startV));
-    if (leftNotch)
-    {
-        pts = addPoint(pts, vector(nw, nd));
-        pts = addPoint(pts, vector(nw, zero));
-    }
-    if (rightNotch)
-    {
-        pts = addPoint(pts, vector(L - nw, zero));
-        pts = addPoint(pts, vector(L - nw, nd));
-        pts = addPoint(pts, vector(L, nd));
-    }
-    else
-    {
-        pts = addPoint(pts, vector(L, zero));
-    }
-    if (rightTongue)
-    {
-        pts = addPoint(pts, vector(L, p.tongueZ0));
-        pts = addPoint(pts, vector(L + td, p.tongueZ0));
-        pts = addPoint(pts, vector(L + td, p.tongueZ1));
-        pts = addPoint(pts, vector(L, p.tongueZ1));
-    }
-    pts = addPoint(pts, vector(L, h));
-    for (var i = size(p.topNotches) - 1; i >= 0; i -= 1)
-    {
-        const u0 = p.topNotches[i][0];
-        const u1 = p.topNotches[i][1];
-        pts = addPoint(pts, vector(u1, h));
-        pts = addPoint(pts, vector(u1, h - p.topNotchDepth));
-        pts = addPoint(pts, vector(u0, h - p.topNotchDepth));
-        pts = addPoint(pts, vector(u0, h));
-    }
-    pts = addPoint(pts, vector(zero, h));
-    if (leftTongue)
-    {
-        pts = addPoint(pts, vector(zero, p.tongueZ1));
-        pts = addPoint(pts, vector(-td, p.tongueZ1));
-        pts = addPoint(pts, vector(-td, p.tongueZ0));
-        pts = addPoint(pts, vector(zero, p.tongueZ0));
-    }
-    pts = addPoint(pts, pts[0]);
-    return pts;
+    localCuboid(context, id + "neck", p, base - dir * overlap, base + dir * (neckL + overlap), -neckT / 2, neckT / 2, z0, p.height);
+    localCuboid(context, id + "head", p, base + dir * neckL, base + dir * (neckL + headL), -headT / 2, headT / 2, z0, p.height);
+    return [id + "neck", id + "head"];
 }
 
-function addPoint(pts is array, p is Vector) returns array
+/** Axis-aligned cuboid given in the separator's local u/v/z coordinates. */
+function localCuboid(context is Context, id is Id, p is map, u0, u1, v0, v1, z0, z1)
 {
-    if (size(pts) > 0 && tolerantEquals(pts[size(pts) - 1], p))
-        return pts;
-    return append(pts, p);
+    const c1 = p.origin + u0 * p.uDir + v0 * p.vDir + z0 * p.zDir;
+    const c2 = p.origin + u1 * p.uDir + v1 * p.vDir + z1 * p.zDir;
+    fCuboid(context, id, {
+        "corner1" : vector(min(c1[0], c2[0]), min(c1[1], c2[1]), min(c1[2], c2[2])),
+        "corner2" : vector(max(c1[0], c2[0]), max(c1[1], c2[1]), max(c1[2], c2[2]))
+    });
 }

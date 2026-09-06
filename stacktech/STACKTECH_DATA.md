@@ -118,6 +118,27 @@ The receivers on the walls are short vertical channels moulded proud of the wall
 hanging from the rim, with a rectangular window near the top (visible in the
 D-71 / R91 / D-72 photos).
 
+### Measured OEM separator and edge-mount geometry
+
+Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
+(these are the defaults in `stacktech_separators.fs`):
+
+| Feature | Value |
+|---|---|
+| Separator overall thickness (perimeter rails / T head) | **0.265 in** |
+| Recessed web (indented interior of the separator) | **0.095 in** |
+| T-slot interior on the separator face | **0.095 in** |
+| Edge mount hollow interior (accepts the T head) | **0.29 in** |
+| Edge mount channel (the separator neck runs in it) | **0.166 in** |
+
+Construction as modelled: a 0.265 in thick frame with a 0.095 in web recessed
+on both faces; each wall end is a T whose neck fills the 0.166 in channel and
+whose head fills the 0.29 in hollow; front-to-back separators end in a 0.095 in
+web tongue that drops through a matching T-slot cut in the side-to-side
+separator and is retained by a 0.265 in head on the far side. T head length,
+neck length and rail width are not measured yet and default to 0.25 in / 0.10 in
+/ 0.25 in.
+
 ### Published CAD files found
 
 No public CAD of the OEM *drawer* dividers exists (searched Printables, MakerWorld,

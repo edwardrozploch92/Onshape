@@ -30,9 +30,12 @@ locally (see Setup below).
 - `stacktech/stacktech_separators.fs` – the **StackTech Separators** custom
   feature. Pick the ToughBuilt StackTech drawer, choose which side-wall
   receiver the full-width side-to-side bar sits in, and optionally add
-  front-to-back bars that tongue into the front/back wall and half-lap onto
-  the side-to-side bar. Every drawer's interior size and receiver count is a
-  single hard-coded table (`drawerSpec()`) at the top of the file.
+  front-to-back bars that T into the front/back wall mount and drop into
+  T-slots in the side-to-side bar. Bars are modelled like the OEM part: a
+  0.265 in frame with a 0.095 in recessed web and T ends sized to the
+  0.29 in / 0.166 in edge mount; all of those are defaults in the collapsed
+  "Separator geometry" group. Every drawer's interior size and receiver
+  count is a single hard-coded table (`drawerSpec()`) at the top of the file.
 - `stacktech/STACKTECH_DATA.md` – interior dimensions, receiver counts and
   existing CAD/STL links for every StackTech drawer and box, with sources and
   confidence tags.

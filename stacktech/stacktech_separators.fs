@@ -17,7 +17,7 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *   - front-to-back wall end (measured from the OEM large divider): a 0.21"
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
- *     0.1525" channel wall, and a rib that rides inside the mount
+ *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -125,6 +125,7 @@ const FB_END_THICKNESS_BOUNDS = { (meter) : [0.000508, 0.005334, 0.0127], (milli
 const FB_RIDGE_GAP_BOUNDS = { (meter) : [0.000508, 0.0038735, 0.0127], (millimeter) : 3.8735, (centimeter) : 0.38735, (inch) : 0.1525, (foot) : 0.01271, (yard) : 0.00424 } as LengthBoundSpec;
 const FB_RIDGE_WIDTH_BOUNDS = { (meter) : [0.000254, 0.001524, 0.0127], (millimeter) : 1.524, (centimeter) : 0.1524, (inch) : 0.06, (foot) : 0.005, (yard) : 0.00167 } as LengthBoundSpec;
 const FB_END_LENGTH_BOUNDS = { (meter) : [0, 0.00889, 0.0762], (millimeter) : 8.89, (centimeter) : 0.889, (inch) : 0.35, (foot) : 0.02917, (yard) : 0.00972 } as LengthBoundSpec;
+const FB_CHANNEL_DEPTH_BOUNDS = { (meter) : [0.000508, 0.00381, 0.0127], (millimeter) : 3.81, (centimeter) : 0.381, (inch) : 0.15, (foot) : 0.0125, (yard) : 0.00417 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -210,6 +211,9 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Front-to-back: ridge to rib gap" }
             isLength(definition.fbRidgeGap, FB_RIDGE_GAP_BOUNDS);
 
+            annotation { "Name" : "Front-to-back: mount channel depth (rib depth)" }
+            isLength(definition.fbChannelDepth, FB_CHANNEL_DEPTH_BOUNDS);
+
             annotation { "Name" : "Front-to-back: ridge width" }
             isLength(definition.fbRidgeWidth, FB_RIDGE_WIDTH_BOUNDS);
 
@@ -259,12 +263,10 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         const slotNeckL = T + 2 * c;
         const endLen = definition.neckLength + definition.headLength;
         // Front-to-back wall hook: the ridge's outer face sits at the mount bump-out,
-        // the neck spans the ridge-to-rib gap, and the rib fills the rest of the
-        // bump-out inside the mount, stopping endClearance short of the wall.
+        // the neck spans the ridge-to-rib gap, and the rib runs the full depth of
+        // the mount's channel (measured, so it may reach slightly past the wall plane).
         const ec = definition.endClearance;
-        const fbRibDepth = definition.fbBumpOut - definition.fbRidgeGap - ec;
-        if (fbRibDepth <= zero)
-            throw regenError("The mount bump-out must exceed the ridge-to-rib gap plus the wall clearance.", ["fbBumpOut"]);
+        const fbRibDepth = definition.fbChannelDepth;
         const fbWallLen = definition.fbBumpOut + definition.fbRidgeWidth + definition.fbEndLength;
 
         const pitch = spec.depth / (spec.sideSlots + 1);
@@ -408,7 +410,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "fbEndThickness" : 0.21 * inch,
         "fbRidgeGap" : 0.1525 * inch,
         "fbRidgeWidth" : 0.06 * inch,
-        "fbEndLength" : 0.35 * inch
+        "fbEndLength" : 0.35 * inch,
+        "fbChannelDepth" : 0.15 * inch
     });
 
 /**
@@ -510,7 +513,7 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         const uRidge = p.fbEndLength;                       // ridge inner face
         const uRidgeOut = uRidge + p.fbRidgeWidth;          // ridge outer face (mount bump-out)
         const uRib = uRidgeOut + p.fbRidgeGap;              // rib inner face (inside the mount)
-        const uRibTip = uRib + p.fbRibDepth;                // rib tip, endClearance short of the wall
+        const uRibTip = uRib + p.fbRibDepth;                // rib tip at the bottom of the mount channel
         localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
         localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
         localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, p.height);

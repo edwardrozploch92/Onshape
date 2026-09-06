@@ -12,8 +12,12 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *
  * Separator construction (measured from the OEM ToughBuilt divider):
  *   - overall thickness 0.265" (perimeter rails), recessed web 0.095" thick
- *   - wall end: T connector, neck sized to the 0.166" mount channel, head
- *     sized to the 0.29" hollow interior of the mount
+ *   - side-to-side wall end: T connector, neck sized to the 0.166" mount
+ *     channel, head sized to the 0.29" hollow interior of the mount
+ *   - front-to-back wall end (measured from the OEM large divider): a 0.21"
+ *     thick end section, a ridge that bears on the outer face of the wall
+ *     mount (which stands 0.285" off the wall), a neck through the mount's
+ *     0.1525" channel wall, and a rib that rides inside the mount
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -94,7 +98,8 @@ function drawerSpec(drawer is StackTechDrawer) returns map
 
 // End connector types
 const END_NONE = "NONE";
-const END_WALL = "WALL"; // T into a drawer-wall edge mount
+const END_WALL = "WALL"; // T into a drawer-wall edge mount (side-to-side separators)
+const END_HOOK = "HOOK"; // ridge + rib into a drawer-wall edge mount (front-to-back separators)
 const END_SLOT = "SLOT"; // T through a slot in another separator
 
 const SLOT_BOUNDS = { (unitless) : [1, 1, 8] } as IntegerBoundSpec;
@@ -114,6 +119,12 @@ const RAIL_WIDTH_BOUNDS = { (meter) : [0, 0.00635, 0.0508], (millimeter) : 6.35,
 const CLEARANCE_BOUNDS = { (meter) : [0, 0.0003175, 0.00127], (millimeter) : 0.3175, (centimeter) : 0.03175, (inch) : 0.0125, (foot) : 0.00104, (yard) : 0.000347 } as LengthBoundSpec;
 const TOP_CLEARANCE_BOUNDS = { (meter) : [0, 0.004, 0.1016], (millimeter) : 4, (centimeter) : 0.4, (inch) : 0.157, (foot) : 0.01312, (yard) : 0.00437 } as LengthBoundSpec;
 const END_CLEARANCE_BOUNDS = { (meter) : [0, 0.000508, 0.0127], (millimeter) : 0.508, (centimeter) : 0.0508, (inch) : 0.02, (foot) : 0.00167, (yard) : 0.000556 } as LengthBoundSpec;
+// Front-to-back wall connector (measured from the OEM large divider).
+const FB_BUMP_OUT_BOUNDS = { (meter) : [0.00127, 0.007239, 0.0254], (millimeter) : 7.239, (centimeter) : 0.7239, (inch) : 0.285, (foot) : 0.02375, (yard) : 0.00792 } as LengthBoundSpec;
+const FB_END_THICKNESS_BOUNDS = { (meter) : [0.000508, 0.005334, 0.0127], (millimeter) : 5.334, (centimeter) : 0.5334, (inch) : 0.21, (foot) : 0.0175, (yard) : 0.00583 } as LengthBoundSpec;
+const FB_RIDGE_GAP_BOUNDS = { (meter) : [0.000508, 0.0038735, 0.0127], (millimeter) : 3.8735, (centimeter) : 0.38735, (inch) : 0.1525, (foot) : 0.01271, (yard) : 0.00424 } as LengthBoundSpec;
+const FB_RIDGE_WIDTH_BOUNDS = { (meter) : [0.000254, 0.001524, 0.0127], (millimeter) : 1.524, (centimeter) : 0.1524, (inch) : 0.06, (foot) : 0.005, (yard) : 0.00167 } as LengthBoundSpec;
+const FB_END_LENGTH_BOUNDS = { (meter) : [0, 0.00889, 0.0762], (millimeter) : 8.89, (centimeter) : 0.889, (inch) : 0.35, (foot) : 0.02917, (yard) : 0.00972 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -189,6 +200,21 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
 
             annotation { "Name" : "Clearance at each wall" }
             isLength(definition.endClearance, END_CLEARANCE_BOUNDS);
+
+            annotation { "Name" : "Front-to-back: wall mount bump-out from the wall" }
+            isLength(definition.fbBumpOut, FB_BUMP_OUT_BOUNDS);
+
+            annotation { "Name" : "Front-to-back: wall end section thickness" }
+            isLength(definition.fbEndThickness, FB_END_THICKNESS_BOUNDS);
+
+            annotation { "Name" : "Front-to-back: ridge to rib gap" }
+            isLength(definition.fbRidgeGap, FB_RIDGE_GAP_BOUNDS);
+
+            annotation { "Name" : "Front-to-back: ridge width" }
+            isLength(definition.fbRidgeWidth, FB_RIDGE_WIDTH_BOUNDS);
+
+            annotation { "Name" : "Front-to-back: wall end section length" }
+            isLength(definition.fbEndLength, FB_END_LENGTH_BOUNDS);
         }
     }
     {
@@ -232,10 +258,17 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         const slotNeckT = min(T, definition.tSlotInterior);
         const slotNeckL = T + 2 * c;
         const endLen = definition.neckLength + definition.headLength;
+        // Front-to-back wall hook: the ridge's outer face sits at the mount bump-out,
+        // the neck spans the ridge-to-rib gap, and the rib fills the rest of the
+        // bump-out inside the mount, stopping endClearance short of the wall.
+        const ec = definition.endClearance;
+        const fbRibDepth = definition.fbBumpOut - definition.fbRidgeGap - ec;
+        if (fbRibDepth <= zero)
+            throw regenError("The mount bump-out must exceed the ridge-to-rib gap plus the wall clearance.", ["fbBumpOut"]);
+        const fbWallLen = definition.fbBumpOut + definition.fbRidgeWidth + definition.fbEndLength;
 
         const pitch = spec.depth / (spec.sideSlots + 1);
         const colPitch = spec.width / (positions + 1);
-        const ec = definition.endClearance;
 
         const common = {
             "height" : h,
@@ -255,6 +288,12 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             // the mating tongue starts just above this floor.
             "slotFloor" : max(definition.railWidth, 0.1 * inch),
             "clearance" : c,
+            "fbEndThickness" : min(definition.fbEndThickness, T),
+            "fbEndLength" : definition.fbEndLength,
+            "fbRidgeWidth" : definition.fbRidgeWidth,
+            "fbRidgeGap" : definition.fbRidgeGap,
+            "fbRibDepth" : fbRibDepth,
+            "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
             "zDir" : vector(0, 0, 1)
         };
 
@@ -306,18 +345,18 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             var runLabel;
             if (definition.anchor == FrontToBackAnchor.FROM_FRONT_WALL)
             {
-                yStart = ec + endLen;
+                yStart = fbWallLen;
                 bodyLength = (yFirst - T / 2 - c) - yStart;
-                leftEnd = END_WALL;
+                leftEnd = END_HOOK;
                 rightEnd = END_SLOT;
                 runLabel = "front wall to slot " ~ slots[0];
             }
             else if (definition.anchor == FrontToBackAnchor.FROM_BACK_WALL)
             {
                 yStart = yFirst + T / 2 + c;
-                bodyLength = (spec.depth - ec - endLen) - yStart;
+                bodyLength = (spec.depth - fbWallLen) - yStart;
                 leftEnd = END_SLOT;
-                rightEnd = END_WALL;
+                rightEnd = END_HOOK;
                 runLabel = "slot " ~ slots[0] ~ " to back wall";
             }
             else
@@ -328,7 +367,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
                 rightEnd = END_SLOT;
                 runLabel = "slot " ~ slots[0] ~ " to slot " ~ slots[1];
             }
-            if (bodyLength <= 2 * definition.railWidth + endLen)
+            if (bodyLength <= 2 * definition.railWidth + fbWallLen)
                 throw regenError("Front-to-back separator would be too short for its connectors.", ["sideSlot"]);
 
             for (var j = 1; j <= count; j += 1)
@@ -364,7 +403,12 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "railWidth" : 0.25 * inch,
         "clearance" : 0.0125 * inch,
         "topClearance" : 0.157 * inch,
-        "endClearance" : 0.02 * inch
+        "endClearance" : 0.02 * inch,
+        "fbBumpOut" : 0.285 * inch,
+        "fbEndThickness" : 0.21 * inch,
+        "fbRidgeGap" : 0.1525 * inch,
+        "fbRidgeWidth" : 0.06 * inch,
+        "fbEndLength" : 0.35 * inch
     });
 
 /**
@@ -372,7 +416,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
  * Local coordinates: u along the separator (0 at the body start, p.bodyLength at
  * the body end), v across the thickness (0 on the mid-plane), z up from the floor.
  *   p.origin / p.uDir / p.vDir / p.zDir : placement
- *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL or END_SLOT
+ *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL, END_HOOK or END_SLOT
  *   p.faceSlots                         : u positions of T-slots cut through this separator
  */
 function createSeparator(context is Context, id is Id, p is map)
@@ -442,9 +486,15 @@ function createSeparator(context is Context, id is Id, p is map)
 }
 
 /**
- * Adds a T connector (neck + head) to one end of a separator.
+ * Adds a connector to one end of a separator.
  * dir = -1 for the u = 0 end, +1 for the u = bodyLength end.
  * Returns the ids of the pieces created so the caller can union them.
+ *
+ * END_WALL / END_SLOT : T connector (neck + head).
+ * END_HOOK            : front-to-back wall connector, from the body outward:
+ *                       thin end section -> full-thickness ridge (bears on the
+ *                       mount's outer face) -> neck through the mount's channel
+ *                       wall -> rib riding inside the mount.
  */
 function endConnector(context is Context, id is Id, p is map, endType is string, dir is number) returns array
 {
@@ -453,6 +503,21 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
     const zero = 0 * inch;
     const overlap = 0.02 * inch;
     const base = dir < 0 ? zero : p.bodyLength;
+
+    if (endType == END_HOOK)
+    {
+        const tEnd = p.fbEndThickness;
+        const uRidge = p.fbEndLength;                       // ridge inner face
+        const uRidgeOut = uRidge + p.fbRidgeWidth;          // ridge outer face (mount bump-out)
+        const uRib = uRidgeOut + p.fbRidgeGap;              // rib inner face (inside the mount)
+        const uRibTip = uRib + p.fbRibDepth;                // rib tip, endClearance short of the wall
+        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
+        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
+        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, p.height);
+        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, p.height);
+        return [id + "end", id + "ridge", id + "neck", id + "rib"];
+    }
+
     const neckT = endType == END_WALL ? p.wallNeckThickness : p.slotNeckThickness;
     const neckL = endType == END_WALL ? p.wallNeckLength : p.slotNeckLength;
     const headT = endType == END_WALL ? p.wallHeadThickness : p.slotHeadThickness;

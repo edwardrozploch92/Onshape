@@ -131,13 +131,24 @@ Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
 | Edge mount hollow interior (accepts the T head) | **0.29 in** |
 | Edge mount channel (the separator neck runs in it) | **0.166 in** |
 
+Measured from the OEM front-to-back (large) divider's wall connector:
+
+| Feature | Value |
+|---|---|
+| Wall mount bump-out from the wall (ridge's outer face sits here) | **0.285 in** |
+| Wall end section thickness | **0.21 in** |
+| Ridge (bears on the mount) to rib (rides inside the mount) | **0.1525 in** |
+
 Construction as modelled: a 0.265 in thick frame with a 0.095 in web recessed
-on both faces; each wall end is a T whose neck fills the 0.166 in channel and
-whose head fills the 0.29 in hollow; front-to-back separators end in a 0.095 in
-web tongue that drops through a matching T-slot cut in the side-to-side
-separator and is retained by a 0.265 in head on the far side. T head length,
-neck length and rail width are not measured yet and default to 0.25 in / 0.10 in
-/ 0.25 in.
+on both faces. Side-to-side wall ends are a T whose neck fills the 0.166 in
+channel and whose head fills the 0.29 in hollow. Front-to-back wall ends are the
+OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
+0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
+rib inside the mount that stops just short of the wall. Front-to-back separators
+end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
+cut in the side-to-side separator and retained by a 0.265 in head on the far
+side. T head length, neck length, rail width, ridge width and end-section length
+are not measured yet and default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 
 ### Published CAD files found
 

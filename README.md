@@ -31,9 +31,11 @@ locally (see Setup below).
   feature. Pick the ToughBuilt StackTech drawer, choose which side-wall
   receiver the full-width side-to-side bar sits in, and optionally add
   front-to-back bars that T into the front/back wall mount and drop into
-  T-slots in the side-to-side bar. Bars are modelled like the OEM part: a
-  0.265 in frame with a 0.095 in recessed web and T ends sized to the
-  0.29 in / 0.166 in edge mount; all of those are defaults in the collapsed
+  T-slots in the side-to-side bar. Bars are modelled like the OEM parts: a
+  0.265 in frame with a 0.095 in recessed web, T ends on the side-to-side bar
+  sized to the 0.29 in / 0.166 in edge mount, and the OEM ridge-and-rib hook
+  (0.285 in bump-out, 0.21 in end section, 0.1525 in ridge-to-rib) on the
+  front-to-back bars' wall ends; all of those are defaults in the collapsed
   "Separator geometry" group. Every drawer's interior size and receiver
   count is a single hard-coded table (`drawerSpec()`) at the top of the file.
 - `stacktech/STACKTECH_DATA.md` – interior dimensions, receiver counts and

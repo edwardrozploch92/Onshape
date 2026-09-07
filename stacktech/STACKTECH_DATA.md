@@ -147,7 +147,9 @@ OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
-the wall). Front-to-back separators
+the wall). On the top edge a full-thickness triangular gusset bridges the thin
+end section and the body's rail, as on the OEM part (run length estimated at
+0.25 in from a photo). Front-to-back separators
 end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
 cut in the side-to-side separator and retained by a 0.265 in head on the far
 side. T head length, neck length, rail width, ridge width and end-section length

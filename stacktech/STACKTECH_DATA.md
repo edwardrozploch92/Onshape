@@ -147,13 +147,13 @@ OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
-the wall). The mount's slot ends below the separator's top edge, so the neck
-and rib stop at that height and a full-thickness triangle sits over them: its
-top is flush with the separator's top edge out to the wall end, its vertical
-leg is at the ridge's outer face, and the hypotenuse underneath runs from the
-top corner at the wall down to the slot's end height at the ridge, as on the
-OEM part. How far the slot ends below the top edge is not measured yet and
-defaults to 0.4 in. Front-to-back separators
+the wall). In face view (photo of the OEM small divider) the thin 0.21 in
+section is a vertical strip along the wall edge whose top and bottom are cut on
+a diagonal, shallower at the outer edge and deeper at the inner edge; the corners
+above and below it are full thickness. The ridge, neck and rib run only over the
+height where the strip reaches the edge. The thick-corner depth at the edge
+(default 0.75 in) and the chamfer rise toward the body (default 0.25 in) are
+scaled from the photo, not measured. Front-to-back separators
 end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
 cut in the side-to-side separator and retained by a 0.265 in head on the far
 side. T head length, neck length, rail width, ridge width and end-section length

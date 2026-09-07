@@ -19,7 +19,8 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     mount (which stands 0.285" off the wall), a neck through the mount's
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel;
  *     the mount slot ends below the separator top, so the neck and rib stop
- *     short and a triangle over them fills the space above the slot
+ *     short and a full-thickness triangle above them, flush with the top edge
+ *     and the wall end, fills the space over the slot
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -531,17 +532,21 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         // The mount slot ends below the separator top, so the neck and rib that
         // ride in it stop at hc; the end section and ridge are full height.
         const hc = p.height - p.fbConnectorDrop;
+        const uWall = p.fbWallLen - p.endClearance;           // wall face, less clearance
+        const hasGusset = p.fbConnectorDrop > zero && uWall > uRidgeOut;
+        // When the triangle sits on top, let the neck and rib rise into it so the
+        // union shares volume instead of meeting along a line.
+        const hcTop = hasGusset ? hc + overlap : hc;
         localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
         localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
-        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, hc);
-        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, hc);
+        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, hcTop);
+        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, hcTop);
         var pieces = [id + "end", id + "ridge", id + "neck", id + "rib"];
-        const uWall = p.fbWallLen - p.endClearance;           // wall face, less clearance
-        if (p.fbConnectorDrop > zero && uWall > uRidgeOut)
+        if (hasGusset)
         {
-            // Full-thickness triangle over the top of the neck and rib, filling the
-            // space above the mount slot: from the separator top at the ridge's
-            // outer face down to the wall at the height where the slot ends.
+            // Full-thickness triangle over the neck and rib, flush with the top edge
+            // and the wall end: the hypotenuse underneath runs from the top corner
+            // at the ridge's outer face down to the wall where the slot ends.
             topGusset(context, id + "gusset", p, base + dir * uRidgeOut, dir, uWall - uRidgeOut, p.fbConnectorDrop, overlap);
             pieces = append(pieces, id + "gusset");
         }
@@ -562,10 +567,11 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
 
 /**
  * Triangular prism through the full separator thickness, in the u/z plane.
- * Vertices: (base, top), (base, top - drop) and (base + dir * run, top - drop):
- * the hypotenuse runs from the separator top at `base` down to `top - drop` at
- * the far end. The prism is extended `overlap` back past `base` so the union
- * with the neighbouring piece is watertight.
+ * Vertices: (base, top), (base + dir * run, top) and (base + dir * run, top - drop):
+ * the top leg is flush with the separator's top edge, the vertical leg is flush
+ * with the far end, and the hypotenuse underneath runs from the top corner at
+ * `base` down to `top - drop` at the far end. The prism is extended `overlap`
+ * back past `base` so the union with the neighbouring piece is watertight.
  */
 function topGusset(context is Context, id is Id, p is map, base, dir is number, run, drop, overlap)
 {
@@ -577,7 +583,7 @@ function topGusset(context is Context, id is Id, p is map, base, dir is number, 
     });
     skPolyline(sketch, "triangle", { "points" : [
         vector(-dir * overlap, p.height),
-        vector(-dir * overlap, p.height - drop),
+        vector(dir * run, p.height),
         vector(dir * run, p.height - drop),
         vector(-dir * overlap, p.height)
     ] });

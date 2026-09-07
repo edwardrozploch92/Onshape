@@ -148,10 +148,11 @@ OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
 the wall). The mount's slot ends below the separator's top edge, so the neck
-and rib stop at that height and a full-thickness triangle sits over them,
-filling the space above the slot: from the separator top at the ridge's outer
-face down to the wall at the slot's end height, as on the OEM part. How far the
-slot ends below the top edge is not measured yet and defaults to 0.4 in. Front-to-back separators
+and rib stop at that height and a full-thickness triangle sits over them: its
+top is flush with the separator's top edge, its outer face is flush with the
+wall end, and the hypotenuse underneath runs from the top corner at the ridge's
+outer face down to the wall at the slot's end height, as on the OEM part. How
+far the slot ends below the top edge is not measured yet and defaults to 0.4 in. Front-to-back separators
 end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
 cut in the side-to-side separator and retained by a 0.265 in head on the far
 side. T head length, neck length, rail width, ridge width and end-section length

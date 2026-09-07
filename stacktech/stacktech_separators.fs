@@ -545,8 +545,8 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         if (hasGusset)
         {
             // Full-thickness triangle over the neck and rib, flush with the top edge
-            // and the wall end: the hypotenuse underneath runs from the top corner
-            // at the ridge's outer face down to the wall where the slot ends.
+            // out to the wall end: the hypotenuse underneath runs from the top
+            // corner at the wall down to the slot-end height at the ridge's outer face.
             topGusset(context, id + "gusset", p, base + dir * uRidgeOut, dir, uWall - uRidgeOut, p.fbConnectorDrop, overlap);
             pieces = append(pieces, id + "gusset");
         }
@@ -567,11 +567,12 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
 
 /**
  * Triangular prism through the full separator thickness, in the u/z plane.
- * Vertices: (base, top), (base + dir * run, top) and (base + dir * run, top - drop):
- * the top leg is flush with the separator's top edge, the vertical leg is flush
- * with the far end, and the hypotenuse underneath runs from the top corner at
- * `base` down to `top - drop` at the far end. The prism is extended `overlap`
- * back past `base` so the union with the neighbouring piece is watertight.
+ * Vertices: (base, top), (base + dir * run, top) and (base, top - drop):
+ * the top leg is flush with the separator's top edge out to the far end, the
+ * vertical leg is at `base`, and the hypotenuse underneath runs from the top
+ * corner at the far end down to `top - drop` at `base`. The prism is extended
+ * `overlap` back past `base` so the union with the neighbouring piece is
+ * watertight.
  */
 function topGusset(context is Context, id is Id, p is map, base, dir is number, run, drop, overlap)
 {
@@ -584,7 +585,7 @@ function topGusset(context is Context, id is Id, p is map, base, dir is number, 
     skPolyline(sketch, "triangle", { "points" : [
         vector(-dir * overlap, p.height),
         vector(dir * run, p.height),
-        vector(dir * run, p.height - drop),
+        vector(-dir * overlap, p.height - drop),
         vector(-dir * overlap, p.height)
     ] });
     skSolve(sketch);

@@ -18,7 +18,8 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel;
- *     a triangular gusset on the top edge bridges the end section and the body
+ *     the connector stops short of the separator top and a triangle fills the
+ *     gap from the body junction out to the ridge
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -127,7 +128,7 @@ const FB_RIDGE_GAP_BOUNDS = { (meter) : [0.000508, 0.0038735, 0.0127], (millimet
 const FB_RIDGE_WIDTH_BOUNDS = { (meter) : [0.000254, 0.001524, 0.0127], (millimeter) : 1.524, (centimeter) : 0.1524, (inch) : 0.06, (foot) : 0.005, (yard) : 0.00167 } as LengthBoundSpec;
 const FB_END_LENGTH_BOUNDS = { (meter) : [0, 0.00889, 0.0762], (millimeter) : 8.89, (centimeter) : 0.889, (inch) : 0.35, (foot) : 0.02917, (yard) : 0.00972 } as LengthBoundSpec;
 const FB_CHANNEL_DEPTH_BOUNDS = { (meter) : [0.000508, 0.00381, 0.0127], (millimeter) : 3.81, (centimeter) : 0.381, (inch) : 0.15, (foot) : 0.0125, (yard) : 0.00417 } as LengthBoundSpec;
-const FB_GUSSET_BOUNDS = { (meter) : [0, 0.00635, 0.0254], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
+const FB_DROP_BOUNDS = { (meter) : [0, 0.01016, 0.0508], (millimeter) : 10.16, (centimeter) : 1.016, (inch) : 0.4, (foot) : 0.03333, (yard) : 0.01111 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -222,8 +223,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Front-to-back: wall end section length" }
             isLength(definition.fbEndLength, FB_END_LENGTH_BOUNDS);
 
-            annotation { "Name" : "Front-to-back: top gusset length at the wall end (0 = none)" }
-            isLength(definition.fbGussetLength, FB_GUSSET_BOUNDS);
+            annotation { "Name" : "Front-to-back: wall connector height below the separator top" }
+            isLength(definition.fbConnectorDrop, FB_DROP_BOUNDS);
         }
     }
     {
@@ -301,11 +302,13 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             "fbRidgeGap" : definition.fbRidgeGap,
             "fbRibDepth" : fbRibDepth,
             "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
-            // Triangular gusset on the top edge where the thin wall end meets the body.
-            "fbGussetLength" : min(definition.fbGussetLength, definition.fbEndLength),
-            "fbGussetDrop" : definition.railWidth > zero ? definition.railWidth : 0.1 * inch,
+            // The wall connector stops this far below the separator top; a triangle
+            // fills the gap between the connector and the top edge.
+            "fbConnectorDrop" : definition.fbConnectorDrop,
             "zDir" : vector(0, 0, 1)
         };
+        if (h - definition.fbConnectorDrop <= max(definition.railWidth, 0.1 * inch))
+            throw regenError("The front-to-back wall connector would be too short.", ["fbConnectorDrop"]);
 
         if (definition.showEnvelope)
         {
@@ -420,7 +423,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "fbRidgeWidth" : 0.06 * inch,
         "fbEndLength" : 0.35 * inch,
         "fbChannelDepth" : 0.15 * inch,
-        "fbGussetLength" : 0.25 * inch
+        "fbConnectorDrop" : 0.4 * inch
     });
 
 /**
@@ -523,16 +526,19 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         const uRidgeOut = uRidge + p.fbRidgeWidth;          // ridge outer face (mount bump-out)
         const uRib = uRidgeOut + p.fbRidgeGap;              // rib inner face (inside the mount)
         const uRibTip = uRib + p.fbRibDepth;                // rib tip at the bottom of the mount channel
-        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
-        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
-        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, p.height);
-        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, p.height);
+        // The connector does not reach the separator top.
+        const hc = p.height - p.fbConnectorDrop;
+        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, hc);
+        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, hc);
+        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, hc);
+        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, hc);
         var pieces = [id + "end", id + "ridge", id + "neck", id + "rib"];
-        if (p.fbGussetLength > zero && p.fbGussetDrop < p.height)
+        if (p.fbConnectorDrop > zero)
         {
-            // Full-thickness right triangle on the top edge: vertical leg at the body
-            // junction (rail width tall), hypotenuse sloping down toward the wall.
-            topGusset(context, id + "gusset", p, base, dir, p.fbGussetLength, p.fbGussetDrop, overlap);
+            // Full-thickness triangle filling the gap above the connector: from the
+            // separator top at the body junction down to the connector top at the
+            // ridge's outer face.
+            topGusset(context, id + "gusset", p, base, dir, uRidgeOut, p.fbConnectorDrop, overlap);
             pieces = append(pieces, id + "gusset");
         }
         return pieces;
@@ -552,8 +558,10 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
 
 /**
  * Triangular prism through the full separator thickness, in the u/z plane.
- * Vertices: (base, top), (base, top - drop) and (base + dir * run, top).
- * The prism is extended `overlap` into the body so the union is watertight.
+ * Vertices: (base, top), (base, top - drop) and (base + dir * run, top - drop):
+ * the hypotenuse runs from the separator top at the body junction down to the
+ * connector top at the far end. The prism is extended `overlap` into the body
+ * so the union is watertight.
  */
 function topGusset(context is Context, id is Id, p is map, base, dir is number, run, drop, overlap)
 {
@@ -566,7 +574,7 @@ function topGusset(context is Context, id is Id, p is map, base, dir is number, 
     skPolyline(sketch, "triangle", { "points" : [
         vector(-dir * overlap, p.height),
         vector(-dir * overlap, p.height - drop),
-        vector(dir * run, p.height),
+        vector(dir * run, p.height - drop),
         vector(-dir * overlap, p.height)
     ] });
     skSolve(sketch);

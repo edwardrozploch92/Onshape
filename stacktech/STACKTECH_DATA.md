@@ -150,8 +150,9 @@ rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
 the wall). In face view (photo of the OEM small divider) the thin 0.21 in
 section is a vertical strip along the wall edge whose top and bottom are cut on
 a diagonal, shallower at the outer edge and deeper at the inner edge; the corners
-above and below it are full thickness. The ridge, neck and rib run only over the
-height where the strip reaches the edge. The thick-corner depth at the edge
+above and below it are full thickness and reach out to the wall plane (less the
+end clearance), capping the ridge, neck and rib, which run only over the height
+where the strip reaches the edge. The thick-corner depth at the edge
 (default 0.75 in) and the chamfer rise toward the body (default 0.25 in) are
 scaled from the photo, not measured. Front-to-back separators
 end in a 0.095 in web tongue at the other end, dropping through a matching T-slot

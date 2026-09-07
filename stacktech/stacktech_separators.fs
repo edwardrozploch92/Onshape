@@ -20,7 +20,8 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel;
  *     in face view the thin section is a vertical strip along the wall edge
  *     with chamfered top and bottom; the corners above and below it are full
- *     thickness, and the ridge/neck/rib run only over the strip's edge height
+ *     thickness and reach out to the wall plane, capping the ridge/neck/rib,
+ *     which run only over the strip's edge height
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -535,8 +536,9 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         // Face view of the OEM wall end: the thin (0.21") section is a vertical
         // strip along the wall edge whose top and bottom are cut on a diagonal
         // (outer edge shallower, inner edge deeper); the corners above and below
-        // it are full thickness. The ridge, neck and rib that engage the wall
-        // mount run only over the height where the thin strip reaches the edge.
+        // it are full thickness and extend to the wall plane, sitting over the
+        // ridge, neck and rib, which run only over the height where the thin
+        // strip reaches the edge.
         const tEnd = p.fbEndThickness;
         const T = p.thickness;
         const h = p.height;
@@ -548,19 +550,23 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         const d2 = d1 + p.fbChamferRise;                    // thick corner depth at the body junction
         const z0 = d1;                                      // mount engagement range
         const z1 = h - d1;
+        // Outer face of the thick corners: the wall plane less the end clearance
+        // (the corners sit above/below the mount, so they can reach the wall).
+        const uWall = max(p.fbWallLen - p.endClearance, uRidgeOut);
 
         // Thin strip: hexagon with chamfered top and bottom, overlapping the body
         // and the ridge by `overlap`.
         uzPrism(context, id + "end", p, base, dir, [
             [-overlap, d2], [uS + overlap, d1], [uS + overlap, z1], [-overlap, h - d2]
         ], tEnd);
-        // Thick corner blocks above and below the strip, dipping `overlap` past the
-        // chamfer so the union shares volume with the strip.
+        // Thick corner blocks above and below the strip. They extend out over the
+        // ridge, neck and rib to the wall plane, and dip `overlap` past the chamfer
+        // and past z1 / z0 so the union shares volume with the thin pieces.
         uzPrism(context, id + "top", p, base, dir, [
-            [-overlap, h], [uS, h], [uS, z1 - overlap], [-overlap, h - d2 - overlap]
+            [-overlap, h], [uWall, h], [uWall, z1 - overlap], [uS, z1 - overlap], [-overlap, h - d2 - overlap]
         ], T);
         uzPrism(context, id + "bottom", p, base, dir, [
-            [-overlap, zero], [uS, zero], [uS, d1 + overlap], [-overlap, d2 + overlap]
+            [-overlap, zero], [uWall, zero], [uWall, d1 + overlap], [uS, d1 + overlap], [-overlap, d2 + overlap]
         ], T);
         // Ridge, neck and rib into the wall mount. The ridge is the same thickness
         // as the thin strip (it is already wider than the mount channel, so its

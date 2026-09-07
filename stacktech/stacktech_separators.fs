@@ -18,8 +18,8 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel;
- *     the connector stops short of the separator top and a triangle fills the
- *     gap from the body junction out to the ridge
+ *     the mount slot ends below the separator top, so the neck and rib stop
+ *     short and a triangle over them fills the space above the slot
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -223,7 +223,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Front-to-back: wall end section length" }
             isLength(definition.fbEndLength, FB_END_LENGTH_BOUNDS);
 
-            annotation { "Name" : "Front-to-back: wall connector height below the separator top" }
+            annotation { "Name" : "Front-to-back: mount slot end below the separator top" }
             isLength(definition.fbConnectorDrop, FB_DROP_BOUNDS);
         }
     }
@@ -302,9 +302,11 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             "fbRidgeGap" : definition.fbRidgeGap,
             "fbRibDepth" : fbRibDepth,
             "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
-            // The wall connector stops this far below the separator top; a triangle
-            // fills the gap between the connector and the top edge.
+            // The mount slot ends this far below the separator top; a triangle over
+            // the neck and rib fills the space above the slot.
             "fbConnectorDrop" : definition.fbConnectorDrop,
+            "fbWallLen" : fbWallLen,
+            "endClearance" : ec,
             "zDir" : vector(0, 0, 1)
         };
         if (h - definition.fbConnectorDrop <= max(definition.railWidth, 0.1 * inch))
@@ -526,19 +528,21 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         const uRidgeOut = uRidge + p.fbRidgeWidth;          // ridge outer face (mount bump-out)
         const uRib = uRidgeOut + p.fbRidgeGap;              // rib inner face (inside the mount)
         const uRibTip = uRib + p.fbRibDepth;                // rib tip at the bottom of the mount channel
-        // The connector does not reach the separator top.
+        // The mount slot ends below the separator top, so the neck and rib that
+        // ride in it stop at hc; the end section and ridge are full height.
         const hc = p.height - p.fbConnectorDrop;
-        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, hc);
-        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, hc);
+        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
+        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
         localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, hc);
         localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, hc);
         var pieces = [id + "end", id + "ridge", id + "neck", id + "rib"];
-        if (p.fbConnectorDrop > zero)
+        const uWall = p.fbWallLen - p.endClearance;           // wall face, less clearance
+        if (p.fbConnectorDrop > zero && uWall > uRidgeOut)
         {
-            // Full-thickness triangle filling the gap above the connector: from the
-            // separator top at the body junction down to the connector top at the
-            // ridge's outer face.
-            topGusset(context, id + "gusset", p, base, dir, uRidgeOut, p.fbConnectorDrop, overlap);
+            // Full-thickness triangle over the top of the neck and rib, filling the
+            // space above the mount slot: from the separator top at the ridge's
+            // outer face down to the wall at the height where the slot ends.
+            topGusset(context, id + "gusset", p, base + dir * uRidgeOut, dir, uWall - uRidgeOut, p.fbConnectorDrop, overlap);
             pieces = append(pieces, id + "gusset");
         }
         return pieces;
@@ -559,9 +563,9 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
 /**
  * Triangular prism through the full separator thickness, in the u/z plane.
  * Vertices: (base, top), (base, top - drop) and (base + dir * run, top - drop):
- * the hypotenuse runs from the separator top at the body junction down to the
- * connector top at the far end. The prism is extended `overlap` into the body
- * so the union is watertight.
+ * the hypotenuse runs from the separator top at `base` down to `top - drop` at
+ * the far end. The prism is extended `overlap` back past `base` so the union
+ * with the neighbouring piece is watertight.
  */
 function topGusset(context is Context, id is Id, p is map, base, dir is number, run, drop, overlap)
 {

@@ -517,8 +517,9 @@ function createSeparator(context is Context, id is Id, p is map)
  * END_WALL / END_SLOT : T connector (neck + head).
  * END_HOOK            : front-to-back wall connector, from the body outward:
  *                       thin strip (chamfered top/bottom, thick corners above
- *                       and below) -> full-thickness ridge (bears on the mount's
- *                       outer face) -> neck through the mount's channel wall ->
+ *                       and below) -> ridge, same thickness as the strip (bears
+ *                       on the mount's outer face) -> neck through the mount's
+ *                       channel wall ->
  *                       rib riding inside the mount.
  */
 function endConnector(context is Context, id is Id, p is map, endType is string, dir is number) returns array
@@ -561,8 +562,11 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         uzPrism(context, id + "bottom", p, base, dir, [
             [-overlap, zero], [uS, zero], [uS, d1 + overlap], [-overlap, d2 + overlap]
         ], T);
-        // Ridge, neck and rib into the wall mount.
-        localCuboid(context, id + "ridge", p, base + dir * uS, base + dir * uRidgeOut, -T / 2, T / 2, z0, z1);
+        // Ridge, neck and rib into the wall mount. The ridge is the same thickness
+        // as the thin strip (it is already wider than the mount channel, so its
+        // outer face bears on the mount); making it full thickness would leave a
+        // raised lip along the strip's outer edge.
+        localCuboid(context, id + "ridge", p, base + dir * uS, base + dir * uRidgeOut, -tEnd / 2, tEnd / 2, z0, z1);
         localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, z0, z1);
         localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, z0, z1);
         return [id + "end", id + "top", id + "bottom", id + "ridge", id + "neck", id + "rib"];

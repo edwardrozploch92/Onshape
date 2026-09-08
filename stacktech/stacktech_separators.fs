@@ -17,11 +17,7 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *   - front-to-back wall end (measured from the OEM large divider): a 0.21"
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
- *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel;
- *     in face view the thin section is a vertical strip along the wall edge
- *     with chamfered top and bottom; the corners above and below it are full
- *     thickness and reach out to the wall plane, capping the ridge/neck/rib,
- *     which run only over the strip's edge height
+ *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel
  *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
  *     in the mating separator, retained by a 0.265" head on the far side
  *
@@ -130,8 +126,6 @@ const FB_RIDGE_GAP_BOUNDS = { (meter) : [0.000508, 0.0038735, 0.0127], (millimet
 const FB_RIDGE_WIDTH_BOUNDS = { (meter) : [0.000254, 0.001524, 0.0127], (millimeter) : 1.524, (centimeter) : 0.1524, (inch) : 0.06, (foot) : 0.005, (yard) : 0.00167 } as LengthBoundSpec;
 const FB_END_LENGTH_BOUNDS = { (meter) : [0, 0.00889, 0.0762], (millimeter) : 8.89, (centimeter) : 0.889, (inch) : 0.35, (foot) : 0.02917, (yard) : 0.00972 } as LengthBoundSpec;
 const FB_CHANNEL_DEPTH_BOUNDS = { (meter) : [0.000508, 0.00381, 0.0127], (millimeter) : 3.81, (centimeter) : 0.381, (inch) : 0.15, (foot) : 0.0125, (yard) : 0.00417 } as LengthBoundSpec;
-const FB_DROP_BOUNDS = { (meter) : [0, 0.01905, 0.0762], (millimeter) : 19.05, (centimeter) : 1.905, (inch) : 0.75, (foot) : 0.0625, (yard) : 0.02083 } as LengthBoundSpec;
-const FB_CHAMFER_BOUNDS = { (meter) : [0, 0.00635, 0.0508], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -225,12 +219,6 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
 
             annotation { "Name" : "Front-to-back: wall end section length" }
             isLength(definition.fbEndLength, FB_END_LENGTH_BOUNDS);
-
-            annotation { "Name" : "Front-to-back: thick corner depth at the wall edge (top and bottom)" }
-            isLength(definition.fbConnectorDrop, FB_DROP_BOUNDS);
-
-            annotation { "Name" : "Front-to-back: corner chamfer rise toward the body" }
-            isLength(definition.fbChamferRise, FB_CHAMFER_BOUNDS);
         }
     }
     {
@@ -308,16 +296,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             "fbRidgeGap" : definition.fbRidgeGap,
             "fbRibDepth" : fbRibDepth,
             "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
-            // Thick corners at the wall edge, top and bottom, with a chamfer down to
-            // the thin strip that engages the wall mount.
-            "fbConnectorDrop" : definition.fbConnectorDrop,
-            "fbChamferRise" : definition.fbChamferRise,
-            "fbWallLen" : fbWallLen,
-            "endClearance" : ec,
             "zDir" : vector(0, 0, 1)
         };
-        if (h - 2 * (definition.fbConnectorDrop + definition.fbChamferRise) <= 0.2 * inch)
-            throw regenError("The thick corners leave no thin section for the wall mount.", ["fbConnectorDrop"]);
 
         if (definition.showEnvelope)
         {
@@ -431,9 +411,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "fbRidgeGap" : 0.1525 * inch,
         "fbRidgeWidth" : 0.06 * inch,
         "fbEndLength" : 0.35 * inch,
-        "fbChannelDepth" : 0.15 * inch,
-        "fbConnectorDrop" : 0.75 * inch,
-        "fbChamferRise" : 0.25 * inch
+        "fbChannelDepth" : 0.15 * inch
     });
 
 /**
@@ -517,11 +495,9 @@ function createSeparator(context is Context, id is Id, p is map)
  *
  * END_WALL / END_SLOT : T connector (neck + head).
  * END_HOOK            : front-to-back wall connector, from the body outward:
- *                       thin strip (chamfered top/bottom, thick corners above
- *                       and below) -> ridge, same thickness as the strip (bears
- *                       on the mount's outer face) -> neck through the mount's
- *                       channel wall ->
- *                       rib riding inside the mount.
+ *                       thin end section -> full-thickness ridge (bears on the
+ *                       mount's outer face) -> neck through the mount's channel
+ *                       wall -> rib riding inside the mount.
  */
 function endConnector(context is Context, id is Id, p is map, endType is string, dir is number) returns array
 {
@@ -533,49 +509,16 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
 
     if (endType == END_HOOK)
     {
-        // Face view of the OEM wall end: the thin (0.21") section is a vertical
-        // strip along the wall edge whose top and bottom are cut on a diagonal
-        // (outer edge shallower, inner edge deeper); the corners above and below
-        // it are full thickness and extend to the wall plane, sitting over the
-        // ridge, neck and rib, which run only over the height where the thin
-        // strip reaches the edge.
         const tEnd = p.fbEndThickness;
-        const T = p.thickness;
-        const h = p.height;
-        const uS = p.fbEndLength;                           // thin strip outer face / ridge inner face
-        const uRidgeOut = uS + p.fbRidgeWidth;              // ridge outer face (mount bump-out)
+        const uRidge = p.fbEndLength;                       // ridge inner face
+        const uRidgeOut = uRidge + p.fbRidgeWidth;          // ridge outer face (mount bump-out)
         const uRib = uRidgeOut + p.fbRidgeGap;              // rib inner face (inside the mount)
         const uRibTip = uRib + p.fbRibDepth;                // rib tip at the bottom of the mount channel
-        const d1 = p.fbConnectorDrop;                       // thick corner depth at the outer edge
-        const d2 = d1 + p.fbChamferRise;                    // thick corner depth at the body junction
-        const z0 = d1;                                      // mount engagement range
-        const z1 = h - d1;
-        // Outer face of the thick corners: the wall plane less the end clearance
-        // (the corners sit above/below the mount, so they can reach the wall).
-        const uWall = max(p.fbWallLen - p.endClearance, uRidgeOut);
-
-        // Thin strip: hexagon with chamfered top and bottom, overlapping the body
-        // and the ridge by `overlap`.
-        uzPrism(context, id + "end", p, base, dir, [
-            [-overlap, d2], [uS + overlap, d1], [uS + overlap, z1], [-overlap, h - d2]
-        ], tEnd);
-        // Thick corner blocks above and below the strip. They extend out over the
-        // ridge, neck and rib to the wall plane, and dip `overlap` past the chamfer
-        // and past z1 / z0 so the union shares volume with the thin pieces.
-        uzPrism(context, id + "top", p, base, dir, [
-            [-overlap, h], [uWall, h], [uWall, z1 - overlap], [uS, z1 - overlap], [-overlap, h - d2 - overlap]
-        ], T);
-        uzPrism(context, id + "bottom", p, base, dir, [
-            [-overlap, zero], [uWall, zero], [uWall, d1 + overlap], [uS, d1 + overlap], [-overlap, d2 + overlap]
-        ], T);
-        // Ridge, neck and rib into the wall mount. The ridge is the same thickness
-        // as the thin strip (it is already wider than the mount channel, so its
-        // outer face bears on the mount); making it full thickness would leave a
-        // raised lip along the strip's outer edge.
-        localCuboid(context, id + "ridge", p, base + dir * uS, base + dir * uRidgeOut, -tEnd / 2, tEnd / 2, z0, z1);
-        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, z0, z1);
-        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, z0, z1);
-        return [id + "end", id + "top", id + "bottom", id + "ridge", id + "neck", id + "rib"];
+        localCuboid(context, id + "end", p, base - dir * overlap, base + dir * (uRidge + overlap), -tEnd / 2, tEnd / 2, zero, p.height);
+        localCuboid(context, id + "ridge", p, base + dir * uRidge, base + dir * uRidgeOut, -p.thickness / 2, p.thickness / 2, zero, p.height);
+        localCuboid(context, id + "neck", p, base + dir * (uRidgeOut - overlap), base + dir * (uRib + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, p.height);
+        localCuboid(context, id + "rib", p, base + dir * uRib, base + dir * uRibTip, -p.fbRibThickness / 2, p.fbRibThickness / 2, zero, p.height);
+        return [id + "end", id + "ridge", id + "neck", id + "rib"];
     }
 
     const neckT = endType == END_WALL ? p.wallNeckThickness : p.slotNeckThickness;
@@ -588,35 +531,6 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
     localCuboid(context, id + "neck", p, base - dir * overlap, base + dir * (neckL + overlap), -neckT / 2, neckT / 2, z0, p.height);
     localCuboid(context, id + "head", p, base + dir * neckL, base + dir * (neckL + headL), -headT / 2, headT / 2, z0, p.height);
     return [id + "neck", id + "head"];
-}
-
-/**
- * Prism in the separator's u/z plane, centred on the mid-plane and `thickness`
- * thick. `pts` are [u, z] pairs with u measured from `base` in the outward
- * direction `dir` (u > 0 is away from the body).
- */
-function uzPrism(context is Context, id is Id, p is map, base, dir is number, pts is array, thickness)
-{
-    const normal = cross(p.uDir, p.zDir);
-    const origin = p.origin + base * p.uDir - (thickness / 2) * normal;
-    const sketch = newSketchOnPlane(context, id + "sketch", {
-        "sketchPlane" : plane(origin, normal, p.uDir)
-    });
-    var points = [];
-    for (var pt in pts)
-        points = append(points, vector(dir * pt[0], pt[1]));
-    points = append(points, points[0]);
-    skPolyline(sketch, "profile", { "points" : points });
-    skSolve(sketch);
-    opExtrude(context, id, {
-        "entities" : qSketchRegion(id + "sketch"),
-        "direction" : normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : thickness
-    });
-    opDeleteBodies(context, id + "deleteSketch", {
-        "entities" : qCreatedBy(id + "sketch", EntityType.BODY)
-    });
 }
 
 /** Axis-aligned cuboid given in the separator's local u/v/z coordinates. */

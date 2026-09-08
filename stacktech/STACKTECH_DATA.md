@@ -143,18 +143,11 @@ Measured from the OEM front-to-back (large) divider's wall connector:
 Construction as modelled: a 0.265 in thick frame with a 0.095 in web recessed
 on both faces. Side-to-side wall ends are a T whose neck fills the 0.166 in
 channel and whose head fills the 0.29 in hollow. Front-to-back wall ends are the
-OEM hook: a 0.21 in end section, a ridge of the same 0.21 in thickness whose outer face sits
+OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
-the wall). In face view (photo of the OEM small divider) the thin 0.21 in
-section is a vertical strip along the wall edge whose top and bottom are cut on
-a diagonal, shallower at the outer edge and deeper at the inner edge; the corners
-above and below it are full thickness and reach out to the wall plane (less the
-end clearance), capping the ridge, neck and rib, which run only over the height
-where the strip reaches the edge. The thick-corner depth at the edge
-(default 0.75 in) and the chamfer rise toward the body (default 0.25 in) are
-scaled from the photo, not measured. Front-to-back separators
+the wall). Front-to-back separators
 end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
 cut in the side-to-side separator and retained by a 0.265 in head on the far
 side. T head length, neck length, rail width, ridge width and end-section length

@@ -18,8 +18,10 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel
- *   - separator-to-separator joint: 0.095" web tongue through a 0.095" T-slot
- *     in the mating separator, retained by a 0.265" head on the far side
+ *   - separator-to-separator joint: a 0.095" tongue into the 0.095" T-slot in
+ *     the mating separator, stopping at that separator's mid-plane so a
+ *     front-to-back run in the facing cell can enter the same slot from the
+ *     other side
  *
  * Coordinate system: X = side to side (width), Y = front to back (depth,
  * Y = 0 at the front wall), Z = up (Z = 0 on the drawer floor).
@@ -260,7 +262,6 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         // Separator T-slot: the mating separator's web passes through a slot in this one.
         const slotWidth = definition.tSlotInterior + 2 * c;
         const slotNeckT = min(T, definition.tSlotInterior);
-        const slotNeckL = T + 2 * c;
         const endLen = definition.neckLength + definition.headLength;
         // Front-to-back wall hook: the ridge's outer face sits at the mount bump-out,
         // the neck spans the ridge-to-rib gap, and the rib runs the full depth of
@@ -281,8 +282,9 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             "wallNeckLength" : definition.neckLength,
             "wallHeadThickness" : wallHeadT,
             "slotNeckThickness" : slotNeckT,
-            "slotNeckLength" : slotNeckL,
-            "slotHeadThickness" : T,
+            // A tongue reaches only to the mating separator's mid-plane, so a
+            // front-to-back run in the facing cell can share the same slot.
+            "slotEngageDepth" : T / 2,
             "headLength" : definition.headLength,
             "faceSlots" : [],
             "faceSlotWidth" : slotWidth,
@@ -493,7 +495,8 @@ function createSeparator(context is Context, id is Id, p is map)
  * dir = -1 for the u = 0 end, +1 for the u = bodyLength end.
  * Returns the ids of the pieces created so the caller can union them.
  *
- * END_WALL / END_SLOT : T connector (neck + head).
+ * END_WALL           : T connector (neck + head) into a drawer-wall edge mount.
+ * END_SLOT           : half-depth tongue into another separator's T-slot.
  * END_HOOK            : front-to-back wall connector, from the body outward:
  *                       thin end section -> full-thickness ridge (bears on the
  *                       mount's outer face) -> neck through the mount's channel
@@ -521,15 +524,26 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
         return [id + "end", id + "ridge", id + "neck", id + "rib"];
     }
 
-    const neckT = endType == END_WALL ? p.wallNeckThickness : p.slotNeckThickness;
-    const neckL = endType == END_WALL ? p.wallNeckLength : p.slotNeckLength;
-    const headT = endType == END_WALL ? p.wallHeadThickness : p.slotHeadThickness;
-    const headL = p.headLength;
-    // A tongue that drops into another separator's T-slot stops above the slot floor.
-    const z0 = endType == END_WALL ? zero : p.slotFloor + p.clearance;
+    if (endType == END_SLOT)
+    {
+        // Tongue into another separator's T-slot. It reaches only that separator's
+        // mid-plane instead of passing all the way through with a retaining head,
+        // so the front-to-back run in the facing cell can enter the same slot from
+        // the other side; the two tongues meet in the slot with a clearance gap.
+        // No head is needed: each run is captive lengthwise between its wall mount
+        // (or its other slot) and the separator it plugs into.
+        // It also stops above the slot floor so it seats on solid material.
+        localCuboid(context, id + "tongue", p, base - dir * overlap, base + dir * p.slotEngageDepth,
+            -p.slotNeckThickness / 2, p.slotNeckThickness / 2, p.slotFloor + p.clearance, p.height);
+        return [id + "tongue"];
+    }
 
-    localCuboid(context, id + "neck", p, base - dir * overlap, base + dir * (neckL + overlap), -neckT / 2, neckT / 2, z0, p.height);
-    localCuboid(context, id + "head", p, base + dir * neckL, base + dir * (neckL + headL), -headT / 2, headT / 2, z0, p.height);
+    // END_WALL: T through the drawer wall's edge mount.
+    const neckL = p.wallNeckLength;
+    const headL = p.headLength;
+
+    localCuboid(context, id + "neck", p, base - dir * overlap, base + dir * (neckL + overlap), -p.wallNeckThickness / 2, p.wallNeckThickness / 2, zero, p.height);
+    localCuboid(context, id + "head", p, base + dir * neckL, base + dir * (neckL + headL), -p.wallHeadThickness / 2, p.wallHeadThickness / 2, zero, p.height);
     return [id + "neck", id + "head"];
 }
 

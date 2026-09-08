@@ -147,11 +147,18 @@ OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
-the wall). Front-to-back separators
-end in a 0.095 in web tongue at the other end, dropping through a matching T-slot
-cut in the side-to-side separator and retained by a 0.265 in head on the far
-side. T head length, neck length, rail width, ridge width and end-section length
-are not measured yet and default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
+the wall). Front-to-back separators end in a 0.095 in tongue at the other end,
+dropping into the matching T-slot cut through the side-to-side separator. That
+tongue reaches only the side-to-side separator's mid-plane (half of the 0.265 in
+thickness, less the fit clearance) and carries no retaining head, so the
+front-to-back run in the cell on the other side can enter the same slot from its
+own side; the two tongues meet inside the slot with 2 x clearance (0.025 in)
+between them. A head would have to emerge past the far face of the slot, which is
+exactly where the facing run's body sits, so the two runs could not then be used
+together. Each run needs no head anyway: it is captive lengthwise between its wall
+mount (or its second slot) and the separator it plugs into. T head length, neck
+length, rail width, ridge width and end-section length are not measured yet and
+default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 
 ### Published CAD files found
 

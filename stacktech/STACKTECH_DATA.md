@@ -160,6 +160,40 @@ mount (or its second slot) and the separator it plugs into. T head length, neck
 length, rail width, ridge width and end-section length are not measured yet and
 default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 
+### Printing the side-to-side separator in two parts
+
+A one-piece side-to-side separator spans 382.5 mm in the 383.5 mm drawers and
+429.0 mm in the 430 mm rolling boxes, both well over a 256 mm print bed. The
+feature therefore builds it as two parts by default: part 1 ends in a blind
+channel and part 2 in a tongue the thickness of the web (0.095 in), which slides
+into that channel. Assembled length, height, thickness and slot positions are
+identical to the one-piece bar. Set "Split the side-to-side separator into two
+printable parts" to false to get the one-piece bar back.
+
+The joint plane, and the channel that runs back from it, have to clear every
+front-to-back T-slot by the rail width, so the split lands in whichever gap
+between neighbouring slots is nearest the middle of the bar. On the D-74, D-71
+and the rolling boxes the bar's exact midpoint *is* a slot, so the joint shifts
+to one side and the two parts come out unequal. Measured results at the default
+1 in engagement depth:
+
+| Drawer | One piece | Part 1 (channel) | Part 2 (tongue) |
+| --- | --- | --- | --- |
+| D-30-1, D-72, D-70-3 | 382.5 mm | 191.2 mm | 216.6 mm |
+| D-74, D-71 | 382.5 mm | 183.4 mm | 224.5 mm |
+| R91, R92 (both drawers) | 429.0 mm | 206.6 mm | 247.8 mm |
+
+The channel is web + 2 x clearance wide (0.12 in) and runs from the rail width
+up to the height less the rail width, so the top and bottom rails stay solid and
+capture the tongue on all four sides; it can only leave the way it went in. The
+socket end keeps the recessed web back by engagement depth + clearance + rail
+width, so the channel is surrounded by full-thickness material and the side
+walls merge into the web through a solid collar.
+
+Note the front-to-back separators are not split. Most runs are well inside
+256 mm, but a slot-1-to-back-wall run in the deep rolling boxes (R91,
+R92-bottom) reaches about 277 mm and would need splitting too.
+
 ### Published CAD files found
 
 No public CAD of the OEM *drawer* dividers exists (searched Printables, MakerWorld,

@@ -164,11 +164,12 @@ default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 
 A one-piece side-to-side separator spans 382.5 mm in the 383.5 mm drawers and
 429.0 mm in the 430 mm rolling boxes, both well over a 256 mm print bed. The
-feature therefore builds it as two parts by default: part 1 ends in a blind
-channel and part 2 in a tongue the thickness of the web (0.095 in), which slides
-into that channel. Assembled length, height, thickness and slot positions are
-identical to the one-piece bar. Set "Split the side-to-side separator into two
-printable parts" to false to get the one-piece bar back.
+feature therefore builds it as two parts by default, joined tongue and groove:
+part 2's end face carries a tongue the thickness of the web (0.095 in) running
+the full height of the bar, and part 1's end face a matching groove. Assembled
+length, height, thickness and slot positions are identical to the one-piece bar.
+Set "Split the side-to-side separator into two printable parts" to false to get
+the one-piece bar back.
 
 The joint plane, and the channel that runs back from it, have to clear every
 front-to-back T-slot by the rail width, so the split lands in whichever gap
@@ -183,12 +184,19 @@ to one side and the two parts come out unequal. Measured results at the default
 | D-74, D-71 | 382.5 mm | 183.4 mm | 224.5 mm |
 | R91, R92 (both drawers) | 429.0 mm | 206.6 mm | 247.8 mm |
 
-The channel is web + 2 x clearance wide (0.12 in) and runs from the rail width
-up to the height less the rail width, so the top and bottom rails stay solid and
-capture the tongue on all four sides; it can only leave the way it went in. The
-socket end keeps the recessed web back by engagement depth + clearance + rail
-width, so the channel is surrounded by full-thickness material and the side
-walls merge into the web through a solid collar.
+The groove is web + 2 x clearance wide (0.12 in) and runs the full height of the
+end face, open at the top and bottom like any tongue-and-groove edge. It is cut
+one clearance deeper than the tongue is long, so the tongue's shoulders — the
+0.085 in of full-thickness material either side of it — close against the mating
+end face instead of the tongue bottoming out in the groove. Tongue thickness is
+0.36 of the bar thickness, which is the usual tongue-and-groove proportion. The
+grooved end keeps the recessed web back by engagement depth + clearance + rail
+width, so the groove is surrounded by full-thickness material and the side walls
+merge into the web through a solid collar.
+
+Because the groove runs right through, the two parts can also separate by
+sliding apart vertically when loose. In the drawer they cannot: each part's far
+end is T'd into a side-wall edge mount, which holds it down.
 
 Note the front-to-back separators are not split. Most runs are well inside
 256 mm, but a slot-1-to-back-wall run in the deep rolling boxes (R91,

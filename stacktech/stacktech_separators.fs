@@ -18,10 +18,12 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     thick end section, a ridge that bears on the outer face of the wall
  *     mount (which stands 0.285" off the wall), a neck through the mount's
  *     0.1525" channel wall, and a rib that runs in the mount's 0.15" deep channel
- *   - the side-to-side separator prints as two parts joined tongue and groove:
- *     one end face carries a tongue the thickness of the web running the full
- *     height of the bar, the other a matching groove. The tongue's shoulders
- *     seat against the mating end face. Assembled dimensions are unchanged.
+ *   - the side-to-side separator prints as two parts joined tongue and groove.
+ *     The groove is not carved out of the bar: it is a raised sleeve, two walls
+ *     standing proud of the faces, added to a body that keeps its full section
+ *     right up to the seat. The mating part carries a tongue the thickness of
+ *     the web. Both run the full height, and the tongue's tip butts the seat
+ *     face. Assembled length is unchanged; the joint stands proud of the faces.
  *   - separator-to-separator joint: a 0.095" tongue into the 0.095" T-slot in
  *     the mating separator, stopping at that separator's mid-plane so a
  *     front-to-back run in the facing cell can enter the same slot from the
@@ -108,6 +110,7 @@ const END_WALL = "WALL"; // T into a drawer-wall edge mount (side-to-side separa
 const END_HOOK = "HOOK"; // ridge + rib into a drawer-wall edge mount (front-to-back separators)
 const END_SLOT = "SLOT"; // T through a slot in another separator
 const END_TONGUE = "TONGUE"; // male half of the side-to-side split joint
+const END_GROOVE = "GROOVE"; // female half: a raised sleeve, two walls proud of the faces
 
 const SLOT_BOUNDS = { (unitless) : [1, 1, 8] } as IntegerBoundSpec;
 const SECOND_SLOT_BOUNDS = { (unitless) : [1, 2, 8] } as IntegerBoundSpec;
@@ -136,6 +139,7 @@ const FB_CHANNEL_DEPTH_BOUNDS = { (meter) : [0.000508, 0.00381, 0.0127], (millim
 // Printing limit and the sliding joint that splits the side-to-side separator.
 const MAX_PRINT_BOUNDS = { (meter) : [0.05, 0.256, 2], (millimeter) : 256, (centimeter) : 25.6, (inch) : 10.07874, (foot) : 0.8399, (yard) : 0.27997 } as LengthBoundSpec;
 const JOINT_DEPTH_BOUNDS = { (meter) : [0.00635, 0.0254, 0.1016], (millimeter) : 25.4, (centimeter) : 2.54, (inch) : 1, (foot) : 0.08333, (yard) : 0.02778 } as LengthBoundSpec;
+const JOINT_WALL_BOUNDS = { (meter) : [0.0005, 0.00381, 0.0127], (millimeter) : 3.81, (centimeter) : 0.381, (inch) : 0.15, (foot) : 0.0125, (yard) : 0.00417 } as LengthBoundSpec;
 
 annotation { "Feature Type Name" : "StackTech Separators", "Feature Type Description" : "Side-to-side and front-to-back divider bars for ToughBuilt StackTech drawers" }
 export const stackTechSeparators = defineFeature(function(context is Context, id is Id, definition is map)
@@ -241,6 +245,9 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
 
             annotation { "Name" : "Split joint: tongue engagement depth" }
             isLength(definition.jointDepth, JOINT_DEPTH_BOUNDS);
+
+            annotation { "Name" : "Split joint: groove sleeve wall thickness" }
+            isLength(definition.jointWallThickness, JOINT_WALL_BOUNDS);
         }
     }
     {
@@ -318,16 +325,14 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             "fbRidgeGap" : definition.fbRidgeGap,
             "fbRibDepth" : fbRibDepth,
             "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
-            // Sliding joint that splits the side-to-side separator for printing.
-            // The tongue is the thickness of the web, so it continues the web of
-            // the part it plugs into.
+            // Tongue-and-groove joint that splits the side-to-side separator for
+            // printing. The tongue is the thickness of the web; the groove is the
+            // gap between two sleeve walls added to the mating part, whose outer
+            // faces stand proud of the bar's own faces.
             "jointDepth" : definition.jointDepth,
             "jointTongueThickness" : web,
-            // How far in from each end the recessed web starts. A grooved end needs
-            // a full-thickness collar around the groove, so it insets further.
-            "leftInset" : definition.railWidth,
-            "rightInset" : definition.railWidth,
-            "grooveEnd" : 0,
+            "jointGrooveHalf" : web / 2 + c,
+            "jointSleeveHalf" : web / 2 + c + definition.jointWallThickness,
             "zDir" : vector(0, 0, 1)
         };
 
@@ -374,8 +379,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             }
             else
             {
-                // The joint plane, and the socket running jointDepth back from it,
-                // have to clear every T-slot, so the split lands in whichever gap
+                // The joint region, which runs jointDepth back from the joint plane,
+                // has to clear every T-slot, so the split lands in whichever gap
                 // between slots comes nearest the middle of the bar.
                 const split = splitPosition(slotXs, xStart, xEnd, definition.jointDepth,
                     slotWidth / 2, definition.railWidth);
@@ -383,16 +388,17 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
                     throw regenError("No gap between the front-to-back slots is wide enough for the split joint. Reduce the joint engagement depth.", ["jointDepth"]);
                 const xJoint = split.x;
 
-                // Printed length of each part, wall-T tip to joint, and tongue tip
-                // to wall-T tip. Assembled, the two still span the same width.
-                const partALength = xJoint - ec;
-                const partBLength = (spec.width - ec) - (xJoint - definition.jointDepth);
+                // Part 1's body stops at the seat face, one engagement depth short
+                // of the joint plane; its sleeve walls carry on from there to meet
+                // part 2, whose body starts at the joint plane.
+                const xSeat = xJoint - definition.jointDepth;
+
+                // Printed length of each part: wall-T tip to sleeve tips, and tongue
+                // tip to wall-T tip. Assembled, the two still span the same width.
+                const partALength = (xJoint - c) - ec;
+                const partBLength = (spec.width - ec) - xSeat;
                 if (max(partALength, partBLength) > definition.maxPrintLength)
                     throw regenError("Even split in two the side-to-side separator is longer than the maximum printed length. Raise the limit or split it by hand.", ["maxPrintLength"]);
-
-                // The grooved end needs solid material around the groove, then a
-                // collar before the recessed web starts.
-                const grooveInset = definition.jointDepth + c + definition.railWidth;
 
                 for (var k in slots)
                 {
@@ -400,13 +406,11 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
                         "origin" : vector(xStart, k * pitch, zero),
                         "uDir" : vector(1, 0, 0),
                         "vDir" : vector(0, 1, 0),
-                        "bodyLength" : xJoint - xStart,
+                        "bodyLength" : xSeat - xStart,
                         "leftEnd" : END_WALL,
-                        "rightEnd" : END_NONE,
-                        "rightInset" : grooveInset,
-                        "grooveEnd" : 1,
-                        "faceSlots" : localSlots(slotXs, xStart, xStart, xJoint),
-                        "name" : "StackTech side-to-side separator - " ~ spec.label ~ " - slot " ~ k ~ " - part 1 of 2 (groove)"
+                        "rightEnd" : END_GROOVE,
+                        "faceSlots" : localSlots(slotXs, xStart, xStart, xSeat),
+                        "name" : "StackTech side-to-side separator - " ~ spec.label ~ " - slot " ~ k ~ " - part 1 of 2 (groove sleeve)"
                     }));
                     createSeparator(context, id + ("ssB" ~ k), mergeMaps(common, {
                         "origin" : vector(xJoint, k * pitch, zero),
@@ -500,7 +504,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "fbChannelDepth" : 0.15 * inch,
         "splitForPrinting" : true,
         "maxPrintLength" : 256 * millimeter,
-        "jointDepth" : 1 * inch
+        "jointDepth" : 1 * inch,
+        "jointWallThickness" : 0.15 * inch
     });
 
 /**
@@ -521,7 +526,7 @@ function localSlots(slotXs is array, origin, lo, hi) returns array
 /**
  * Picks where to split the side-to-side separator, in absolute X.
  *
- * The joint plane, and the socket that runs `jointDepth` back from it, must stay
+ * The joint plane, and the joint region that runs `jointDepth` back from it, must stay
  * clear of every T-slot by `margin`, so the joint has to sit inside one of the
  * gaps between neighbouring slots. Returns the feasible point nearest the middle
  * of the bar, which keeps the two printed parts as close to equal as the slot
@@ -568,7 +573,6 @@ function splitPosition(slotXs is array, xLow, xHigh, jointDepth, halfSlot, margi
  * the body end), v across the thickness (0 on the mid-plane), z up from the floor.
  *   p.origin / p.uDir / p.vDir / p.zDir : placement
  *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL, END_HOOK, END_SLOT or END_TONGUE
- *   p.grooveEnd                         : -1 / +1 to cut the split joint's groove in that end
  *   p.faceSlots                         : u positions of T-slots cut through this separator
  */
 function createSeparator(context is Context, id is Id, p is map)
@@ -583,12 +587,12 @@ function createSeparator(context is Context, id is Id, p is map)
     var pieces = [id + "body"];
     localCuboid(context, id + "body", p, zero, L, -T / 2, T / 2, zero, h);
 
-    // Recess both faces down to the web, leaving perimeter rails. A socket end
-    // insets further so its channel keeps full-thickness walls.
-    if (rw > zero && L > p.leftInset + p.rightInset + eps && h > 2 * rw + eps)
+    // Recess both faces down to the web, leaving perimeter rails. The end faces
+    // stay full thickness, which is what the split joint's sleeve walls root on.
+    if (rw > zero && L > 2 * rw + eps && h > 2 * rw + eps)
     {
-        localCuboid(context, id + "recessA", p, p.leftInset, L - p.rightInset, p.webThickness / 2, T / 2 + eps, rw, h - rw);
-        localCuboid(context, id + "recessB", p, p.leftInset, L - p.rightInset, -T / 2 - eps, -p.webThickness / 2, rw, h - rw);
+        localCuboid(context, id + "recessA", p, rw, L - rw, p.webThickness / 2, T / 2 + eps, rw, h - rw);
+        localCuboid(context, id + "recessB", p, rw, L - rw, -T / 2 - eps, -p.webThickness / 2, rw, h - rw);
         opBoolean(context, id + "recess", {
             "tools" : qUnion([qCreatedBy(id + "recessA", EntityType.BODY), qCreatedBy(id + "recessB", EntityType.BODY)]),
             "targets" : qCreatedBy(id + "body", EntityType.BODY),
@@ -609,25 +613,6 @@ function createSeparator(context is Context, id is Id, p is map)
         opBoolean(context, id + "union", {
             "tools" : bodyQuery,
             "operationType" : BooleanOperationType.UNION
-        });
-    }
-
-    // Female half of the split joint: the groove. It runs the full height of the
-    // end face, open at the top and bottom like any tongue-and-groove edge, and
-    // a clearance deeper than the tongue is long so the tongue's shoulders close
-    // against the end face rather than bottoming out.
-    if (p.grooveEnd != 0)
-    {
-        const dirG = p.grooveEnd;
-        const baseG = dirG < 0 ? zero : L;
-        const halfWidth = p.jointTongueThickness / 2 + p.clearance;
-        localCuboid(context, id + "grooveCut", p,
-            baseG - dirG * (p.jointDepth + p.clearance), baseG + dirG * eps,
-            -halfWidth, halfWidth, -eps, h + eps);
-        opBoolean(context, id + "groove", {
-            "tools" : qCreatedBy(id + "grooveCut", EntityType.BODY),
-            "targets" : bodyQuery,
-            "operationType" : BooleanOperationType.SUBTRACTION
         });
     }
 
@@ -666,6 +651,8 @@ function createSeparator(context is Context, id is Id, p is map)
  * END_SLOT           : half-depth tongue into another separator's T-slot.
  * END_TONGUE         : male half of the split joint, a full-height tongue that
  *                      slides into the groove in the mating side-to-side part.
+ * END_GROOVE         : female half, a raised sleeve of two walls standing proud
+ *                      of the bar's faces. The groove is the gap between them.
  * END_HOOK            : front-to-back wall connector, from the body outward:
  *                       thin end section -> full-thickness ridge (bears on the
  *                       mount's outer face) -> neck through the mount's channel
@@ -697,11 +684,28 @@ function endConnector(context is Context, id is Id, p is map, endType is string,
     {
         // Male half of the split joint: a tongue the thickness of the web running
         // the full height of the end face, so it continues the web of the part it
-        // slides into. The full-thickness material behind it leaves a shoulder on
-        // each side, and those shoulders seat against the mating end face.
+        // slides into. Its tip butts the mating part's end face, which is a solid
+        // full-section seat, and the sleeve walls close over it either side.
         localCuboid(context, id + "tongue", p, base - dir * overlap, base + dir * p.jointDepth,
             -p.jointTongueThickness / 2, p.jointTongueThickness / 2, zero, p.height);
         return [id + "tongue"];
+    }
+
+    if (endType == END_GROOVE)
+    {
+        // Female half of the split joint. Rather than carving a groove back into
+        // the bar and leaving a thin skin either side, two walls are added off the
+        // end face and the groove is simply the gap between them. Their outer
+        // faces stand proud of the bar's faces, so the bar keeps its full section
+        // right up to the seat and the walls are as thick as they need to be.
+        // They stop a clearance short of the mating body, so the tongue's tip
+        // seats on this part's end face instead.
+        const reach = p.jointDepth - p.clearance;
+        localCuboid(context, id + "wallA", p, base - dir * overlap, base + dir * reach,
+            p.jointGrooveHalf, p.jointSleeveHalf, zero, p.height);
+        localCuboid(context, id + "wallB", p, base - dir * overlap, base + dir * reach,
+            -p.jointSleeveHalf, -p.jointGrooveHalf, zero, p.height);
+        return [id + "wallA", id + "wallB"];
     }
 
     if (endType == END_SLOT)

@@ -32,8 +32,10 @@ locally (see Setup below).
   receiver the full-width side-to-side bar sits in, and optionally add
   front-to-back bars that T into the front/back wall mount and drop into
   T-slots in the side-to-side bar. The side-to-side bar is emitted as two
-  printable parts joined tongue and groove (assembled dimensions unchanged),
-  so each fits a 256 mm bed. Bars are modelled like the OEM parts: a
+  printable parts joined tongue and groove (assembled length unchanged), so
+  each fits a 256 mm bed. The groove is a raised sleeve added to one part
+  rather than a slot cut into it, so the bar keeps its full section at the
+  splice. Bars are modelled like the OEM parts: a
   0.265 in frame with a 0.095 in recessed web, T ends on the side-to-side bar
   sized to the 0.29 in / 0.166 in edge mount, and the OEM ridge-and-rib hook
   (0.285 in bump-out, 0.21 in end section, 0.1525 in ridge-to-rib) on the

@@ -164,12 +164,15 @@ default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 
 A one-piece side-to-side separator spans 382.5 mm in the 383.5 mm drawers and
 429.0 mm in the 430 mm rolling boxes, both well over a 256 mm print bed. The
-feature therefore builds it as two parts by default, joined tongue and groove:
-part 2's end face carries a tongue the thickness of the web (0.095 in) running
-the full height of the bar, and part 1's end face a matching groove. Assembled
-length, height, thickness and slot positions are identical to the one-piece bar.
-Set "Split the side-to-side separator into two printable parts" to false to get
-the one-piece bar back.
+feature therefore builds it as two parts by default, joined tongue and groove.
+Part 2's end face carries a tongue the thickness of the web (0.095 in) running
+the full height of the bar. Part 1 does not have a groove cut into it: instead
+two sleeve walls are added off its end face and the groove is simply the gap
+between them, so the bar keeps its full 0.265 in section right up to the seat.
+Assembled length, height and slot positions are identical to the one-piece bar;
+the joint itself stands proud of the faces (see below). Set "Split the
+side-to-side separator into two printable parts" to false to get the one-piece
+bar back.
 
 The joint plane, and the channel that runs back from it, have to clear every
 front-to-back T-slot by the rail width, so the split lands in whichever gap
@@ -185,18 +188,30 @@ to one side and the two parts come out unequal. Measured results at the default
 | R91, R92 (both drawers) | 429.0 mm | 206.6 mm | 247.8 mm |
 
 The groove is web + 2 x clearance wide (0.12 in) and runs the full height of the
-end face, open at the top and bottom like any tongue-and-groove edge. It is cut
-one clearance deeper than the tongue is long, so the tongue's shoulders — the
-0.085 in of full-thickness material either side of it — close against the mating
-end face instead of the tongue bottoming out in the groove. Tongue thickness is
-0.36 of the bar thickness, which is the usual tongue-and-groove proportion. The
-grooved end keeps the recessed web back by engagement depth + clearance + rail
-width, so the groove is surrounded by full-thickness material and the side walls
-merge into the web through a solid collar.
+end face, open top and bottom like any tongue-and-groove edge. Its walls are a
+default 0.15 in thick, which puts their outer faces at 0.21 in from the
+mid-plane against the bar's own 0.1325 in — so each wall stands 0.0775 in
+(1.97 mm) proud of its face and the joint measures 0.42 in across against the
+bar's 0.265 in. Only 0.0725 in of each wall's 0.15 in thickness is rooted on the
+bar's end face; the rest is the proud part.
 
-Because the groove runs right through, the two parts can also separate by
-sliding apart vertically when loose. In the drawer they cannot: each part's far
-end is T'd into a side-wall edge mount, which holds it down.
+That is the point of building the groove outward rather than cutting it in. A
+cut groove would have to come out of the 0.265 in section, leaving 0.0725 in
+skins either side and a bar weakened exactly where it is spliced. Added walls
+can be any thickness wanted and the bar keeps its full section.
+
+The sleeve walls stop one clearance short of part 2's body, so what seats is the
+tongue's tip against part 1's end face — a solid full-section butt joint,
+0.265 in by the full height. Tongue thickness is 0.36 of the bar thickness,
+the usual tongue-and-groove proportion.
+
+Two consequences worth knowing. Because the groove runs right through top and
+bottom, the parts can slide apart vertically when loose; in the drawer they
+cannot, since each part's far end is T'd into a side-wall edge mount that holds
+it down. And because the sleeve is proud on both faces, part 1 is no longer flat
+on both sides: printed lying down it needs support under the rest of the bar, or
+the sleeve wall thickness dialled back to 0.0725 in, which brings the walls
+flush with the faces.
 
 Note the front-to-back separators are not split. Most runs are well inside
 256 mm, but a slot-1-to-back-wall run in the deep rolling boxes (R91,

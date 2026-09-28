@@ -125,11 +125,31 @@ Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
 
 | Feature | Value |
 |---|---|
-| Separator overall thickness (perimeter rails / T head) | **0.265 in** |
-| Recessed web (indented interior of the separator) | **0.095 in** |
+| Separator overall thickness (perimeter rails / T head) | **0.26 in** |
+| Recessed web (indented interior of the separator) | **0.09 in** |
+| Perimeter rail width in the face plane | **0.12 in** |
 | T-slot interior on the separator face | **0.095 in** |
 | Edge mount hollow interior (accepts the T head) | **0.29 in** |
 | Edge mount channel (the separator neck runs in it) | **0.166 in** |
+
+The thickness, web and rail-width figures above were re-measured in September
+2026 from an annotated photo of the OEM side-by-side divider (page 1 of the
+"stacktech organizer" note). They replace the earlier 0.265 / 0.095 / 0.25 in
+values. Two things on that page are **not** yet modelled, because only one page
+of the note is reachable without a login and the shape could not be verified in
+CAD:
+
+- a **0.23 x 0.23 in chamfer** on one corner of the divider. The photo shows it
+  on the bottom-right corner only; the other three read as square, which would
+  make it a keying feature rather than a clearance cut. A freehand profile
+  sketch on the same page shows a much shallower ramp than 45 degrees, so the
+  0.23 x 0.23 reading needs confirming before it is cut.
+- two short **grip/stiffening ribs** on the face near the top edge, a moulded
+  ToughBuilt logo boss, and a small centred **tab on the bottom edge** — all
+  visible but none dimensioned.
+
+The front-to-back divider's revised dimensions are on a second page of the same
+note, which is behind Notability's login and has not been read.
 
 Measured from the OEM front-to-back (large) divider's wall connector:
 
@@ -140,14 +160,14 @@ Measured from the OEM front-to-back (large) divider's wall connector:
 | Ridge (bears on the mount) to rib (rides inside the mount) | **0.1525 in** |
 | Depth of the mount channel the rib runs in | **0.15 in** |
 
-Construction as modelled: a 0.265 in thick frame with a 0.095 in web recessed
-on both faces. Side-to-side wall ends are a T whose neck fills the 0.166 in
+Construction as modelled: a 0.26 in thick frame, its rails 0.12 in wide in the
+face plane, with a 0.09 in web recessed on both faces. Side-to-side wall ends are a T whose neck fills the 0.166 in
 channel and whose head fills the 0.29 in hollow. Front-to-back wall ends are the
 OEM hook: a 0.21 in end section, a full-thickness ridge whose outer face sits
 0.285 in from the wall, a neck through the 0.1525 in channel wall, and a 0.21 in
 rib running the full 0.15 in depth of the mount channel (with these numbers the
 rib tip sits 0.0175 in past the wall plane, i.e. the channel is recessed into
-the wall). Front-to-back separators end in a 0.095 in tongue at the other end,
+the wall). Front-to-back separators end in a 0.09 in tongue at the other end,
 dropping into the matching T-slot cut through the side-to-side separator. That
 tongue reaches only the side-to-side separator's mid-plane (half of the 0.265 in
 thickness, less the fit clearance) and carries no retaining head, so the

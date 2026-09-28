@@ -11,7 +11,9 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     plug into vertical T-slots cut through the side-to-side separator.
  *
  * Separator construction (measured from the OEM ToughBuilt divider):
- *   - overall thickness 0.265" (perimeter rails), recessed web 0.095" thick
+ *   - overall thickness 0.26" through the perimeter rails, which are 0.12" wide
+ *     in the face plane; the web they frame is recessed to 0.09" (measured from
+ *     the OEM side-by-side divider, 2026-09)
  *   - side-to-side wall end: T connector, neck sized to the 0.166" mount
  *     channel, head sized to the 0.29" hollow interior of the mount
  *   - front-to-back wall end (measured from the OEM large divider): a 0.21"
@@ -26,7 +28,7 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     wanted, at the cost of standing out from the faces. Either way the mating
  *     part carries a full-height tongue the thickness of the web, and assembled
  *     length, height and slot positions are unchanged.
- *   - separator-to-separator joint: a 0.095" tongue into the 0.095" T-slot in
+ *   - separator-to-separator joint: a 0.09" tongue into the 0.095" T-slot in
  *     the mating separator, stopping at that separator's mid-plane so a
  *     front-to-back run in the facing cell can enter the same slot from the
  *     other side
@@ -128,14 +130,14 @@ const COUNT_BOUNDS = { (unitless) : [1, 1, 8] } as IntegerBoundSpec;
 const POSITION_BOUNDS = { (unitless) : [1, 2, 8] } as IntegerBoundSpec;
 
 // Measured OEM separator / mount dimensions (inches) are the defaults.
-const THICKNESS_BOUNDS = { (meter) : [0.000508, 0.006731, 0.0127], (millimeter) : 6.731, (centimeter) : 0.6731, (inch) : 0.265, (foot) : 0.02208, (yard) : 0.00736 } as LengthBoundSpec;
-const WEB_BOUNDS = { (meter) : [0.000254, 0.002413, 0.00762], (millimeter) : 2.413, (centimeter) : 0.2413, (inch) : 0.095, (foot) : 0.00792, (yard) : 0.00264 } as LengthBoundSpec;
+const THICKNESS_BOUNDS = { (meter) : [0.000508, 0.006604, 0.0127], (millimeter) : 6.604, (centimeter) : 0.6604, (inch) : 0.26, (foot) : 0.021667, (yard) : 0.0072222 } as LengthBoundSpec;
+const WEB_BOUNDS = { (meter) : [0.000254, 0.002286, 0.00762], (millimeter) : 2.286, (centimeter) : 0.2286, (inch) : 0.09, (foot) : 0.0075, (yard) : 0.0025 } as LengthBoundSpec;
 const T_SLOT_BOUNDS = { (meter) : [0.000254, 0.002413, 0.00762], (millimeter) : 2.413, (centimeter) : 0.2413, (inch) : 0.095, (foot) : 0.00792, (yard) : 0.00264 } as LengthBoundSpec;
 const MOUNT_HOLLOW_BOUNDS = { (meter) : [0.00127, 0.007366, 0.0254], (millimeter) : 7.366, (centimeter) : 0.7366, (inch) : 0.29, (foot) : 0.02417, (yard) : 0.00806 } as LengthBoundSpec;
 const MOUNT_CHANNEL_BOUNDS = { (meter) : [0.000508, 0.0042164, 0.0127], (millimeter) : 4.2164, (centimeter) : 0.42164, (inch) : 0.166, (foot) : 0.01383, (yard) : 0.00461 } as LengthBoundSpec;
 const HEAD_LENGTH_BOUNDS = { (meter) : [0.00127, 0.00635, 0.0254], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
 const NECK_LENGTH_BOUNDS = { (meter) : [0.000508, 0.00254, 0.0127], (millimeter) : 2.54, (centimeter) : 0.254, (inch) : 0.10, (foot) : 0.00833, (yard) : 0.00278 } as LengthBoundSpec;
-const RAIL_WIDTH_BOUNDS = { (meter) : [0, 0.00635, 0.0508], (millimeter) : 6.35, (centimeter) : 0.635, (inch) : 0.25, (foot) : 0.02083, (yard) : 0.00694 } as LengthBoundSpec;
+const RAIL_WIDTH_BOUNDS = { (meter) : [0, 0.003048, 0.0508], (millimeter) : 3.048, (centimeter) : 0.3048, (inch) : 0.12, (foot) : 0.01, (yard) : 0.0033333 } as LengthBoundSpec;
 const CLEARANCE_BOUNDS = { (meter) : [0, 0.0003175, 0.00127], (millimeter) : 0.3175, (centimeter) : 0.03175, (inch) : 0.0125, (foot) : 0.00104, (yard) : 0.000347 } as LengthBoundSpec;
 const TOP_CLEARANCE_BOUNDS = { (meter) : [0, 0.004, 0.1016], (millimeter) : 4, (centimeter) : 0.4, (inch) : 0.157, (foot) : 0.01312, (yard) : 0.00437 } as LengthBoundSpec;
 const END_CLEARANCE_BOUNDS = { (meter) : [0, 0.000508, 0.0127], (millimeter) : 0.508, (centimeter) : 0.0508, (inch) : 0.02, (foot) : 0.00167, (yard) : 0.000556 } as LengthBoundSpec;
@@ -520,14 +522,14 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "overridePositions" : false,
         "positions" : 2,
         "showEnvelope" : false,
-        "thickness" : 0.265 * inch,
-        "webThickness" : 0.095 * inch,
+        "thickness" : 0.26 * inch,
+        "webThickness" : 0.09 * inch,
         "tSlotInterior" : 0.095 * inch,
         "mountHollow" : 0.29 * inch,
         "mountChannel" : 0.166 * inch,
         "headLength" : 0.25 * inch,
         "neckLength" : 0.10 * inch,
-        "railWidth" : 0.25 * inch,
+        "railWidth" : 0.12 * inch,
         "clearance" : 0.0125 * inch,
         "topClearance" : 0.157 * inch,
         "endClearance" : 0.02 * inch,

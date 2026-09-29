@@ -158,6 +158,11 @@ Both pages dimension a **0.23 x 0.23 in chamfer** on a bottom corner (page 1
 bottom-right, page 2 bottom-left), so it is modelled on both bottom corners of
 every separator, with a parameter that zeroes it.
 
+Both the September re-measure and the chamfer were verified in Onshape on
+2026-09-29. The chamfer removes exactly 0.0137540 in3 from a 0.26 in plate and
+0.0104742 in3 from a 0.198 in one, matching 0.23 x 0.23 x thickness to the last
+digit, and every separator still comes out one body with no notices.
+
 Still not modelled, none of it dimensioned:
 
 - page 2's **0.42 in outer protrusion** that runs inside the slotting part. The

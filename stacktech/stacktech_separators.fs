@@ -28,7 +28,9 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     wanted, at the cost of standing out from the faces. Either way the mating
  *     part carries a full-height tongue the thickness of the web, and assembled
  *     length, height and slot positions are unchanged.
- *   - both dividers carry a 0.23" x 0.23" chamfer on their bottom corners
+ *   - both dividers carry a 0.23" x 0.23" chamfer on the bottom corner of each
+ *     outer end, taken at the tip of the wall connector so the mounting tongue
+ *     is cut back with it; interior junctions stay square
  *   - the front-to-back separator is a thinner plate than the side-to-side bar,
  *     0.198" against 0.26", and is modelled at that one uniform thickness
  *   - separator-to-separator joint: a 0.09" tongue into the 0.095" T-slot in
@@ -248,7 +250,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Front-to-back: separator thickness" }
             isLength(definition.fbThickness, FB_THICKNESS_BOUNDS);
 
-            annotation { "Name" : "Bottom corner chamfer (0 = none)" }
+            annotation { "Name" : "Bottom corner chamfer at each outer end (0 = none)" }
             isLength(definition.cornerChamfer, CHAMFER_BOUNDS);
 
             annotation { "Name" : "Front-to-back: wall mount bump-out from the wall" }
@@ -634,7 +636,8 @@ function splitPosition(slotXs is array, xLow, xHigh, jointDepth, halfSlot, margi
  *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL, END_HOOK, END_SLOT, END_TONGUE or END_GROOVE
  *   p.grooveEnd                         : -1 / +1 to cut a flush-style groove into that end
  *   p.faceSlots                         : u positions of T-slots cut through this separator
- *   p.cornerChamfer                     : 45 degree cut on both bottom corners (0 = none)
+ *   p.cornerChamfer                     : 45 degree cut on the bottom corner of each
+ *                                         outer (wall-connector) end (0 = none)
  */
 function createSeparator(context is Context, id is Id, p is map)
 {
@@ -714,17 +717,32 @@ function createSeparator(context is Context, id is Id, p is map)
         });
     }
 
-    // Bottom corner chamfers. Both the OEM side-by-side and front-to-back
-    // dividers carry a 45 degree cut of the same size on their lower corners.
-    if (p.cornerChamfer > zero && p.cornerChamfer < min(L, h) / 2)
+    // Bottom corner chamfers. Only the outer ends of the assembled divider get
+    // one, and it sits at the far tip of the wall connector rather than at the
+    // body corner, so the mounting tongue is cut back with everything else and
+    // no part of it hangs below the chamfer. A split joint or a T-slot tongue is
+    // an interior junction, so it stays square and the halves meet flush.
+    if (p.cornerChamfer > zero && p.cornerChamfer < h / 2)
     {
-        cornerChamferCut(context, id + "chamL", p, zero, 1, 1, p.cornerChamfer);
-        cornerChamferCut(context, id + "chamR", p, L, -1, 1, p.cornerChamfer);
-        opBoolean(context, id + "chamfers", {
-            "tools" : qUnion([qCreatedBy(id + "chamL", EntityType.BODY), qCreatedBy(id + "chamR", EntityType.BODY)]),
-            "targets" : bodyQuery,
-            "operationType" : BooleanOperationType.SUBTRACTION
-        });
+        var chamfers = [];
+        if (isOuterEnd(p.leftEnd))
+        {
+            cornerChamferCut(context, id + "chamL", p, -outerEndReach(p, p.leftEnd), 1, 1, p.cornerChamfer);
+            chamfers = append(chamfers, qCreatedBy(id + "chamL", EntityType.BODY));
+        }
+        if (isOuterEnd(p.rightEnd))
+        {
+            cornerChamferCut(context, id + "chamR", p, L + outerEndReach(p, p.rightEnd), -1, 1, p.cornerChamfer);
+            chamfers = append(chamfers, qCreatedBy(id + "chamR", EntityType.BODY));
+        }
+        if (size(chamfers) > 0)
+        {
+            opBoolean(context, id + "chamfers", {
+                "tools" : qUnion(chamfers),
+                "targets" : bodyQuery,
+                "operationType" : BooleanOperationType.SUBTRACTION
+            });
+        }
     }
 
     setProperty(context, {
@@ -735,8 +753,32 @@ function createSeparator(context is Context, id is Id, p is map)
 }
 
 /**
+ * Whether an end of a separator is an outer end of the assembled divider — one
+ * that lands in a drawer-wall mount — rather than an interior junction with
+ * another separator or with the other half of a split bar.
+ */
+function isOuterEnd(endType is string) returns boolean
+{
+    return endType == END_WALL || endType == END_HOOK;
+}
+
+/**
+ * How far an outer end's connector reaches past the body, so a chamfer can be
+ * placed at its tip instead of at the body's own corner.
+ */
+function outerEndReach(p is map, endType is string)
+{
+    if (endType == END_WALL)
+        return p.wallNeckLength + p.headLength;
+    if (endType == END_HOOK)
+        return p.fbEndLength + p.fbRidgeWidth + p.fbRidgeGap + p.fbRibDepth;
+    return 0 * inch;
+}
+
+/**
  * Right-angled triangular prism for chamfering a corner, cut through the whole
- * thickness of the separator. The right angle sits at (uCorner, z = 0); the legs
+ * thickness of the separator. The right angle sits at (uCorner, z = 0), which may
+ * be outside the body when the corner being cut belongs to an end connector; the legs
  * run `leg` along u in the `uSign` direction and `leg` up z in the `zSign` one,
  * so the hypotenuse is the 45 degree chamfer face.
  */

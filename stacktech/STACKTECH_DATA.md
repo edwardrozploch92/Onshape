@@ -155,13 +155,24 @@ that plate, so at 0.198 in the whole part comes out one uniform thickness rather
 than locally thinned — the note's author asked for exactly that simplification.
 
 Both pages dimension a **0.23 x 0.23 in chamfer** on a bottom corner (page 1
-bottom-right, page 2 bottom-left), so it is modelled on both bottom corners of
-every separator, with a parameter that zeroes it.
+bottom-right, page 2 bottom-left). It belongs to the *outer* ends of the
+assembled divider only — the ends that land in a drawer-wall mount — and it is
+taken at the **tip of the wall connector**, not at the corner of the bar's body,
+so the mounting tongue is cut back along with everything else instead of hanging
+below the chamfer. Interior junctions stay square: the two halves of a split bar
+meet flush at the tongue-and-groove joint, and a front-to-back run's T-slot
+tongue keeps its full square section. A parameter zeroes the chamfer.
 
 Both the September re-measure and the chamfer were verified in Onshape on
-2026-09-29. The chamfer removes exactly 0.0137540 in3 from a 0.26 in plate and
-0.0104742 in3 from a 0.198 in one, matching 0.23 x 0.23 x thickness to the last
-digit, and every separator still comes out one body with no notices.
+2026-09-29. Cutting the chamfer at the body corner removes exactly 0.0137540 in3
+from a 0.26 in plate and 0.0104742 in3 from a 0.198 in one, matching
+0.23 x 0.23 x thickness to the last digit. Moving it out to the connector tip was
+verified the same way on 2026-09-29: each half of a split side-to-side bar loses
+0.0068770 in3 — one chamfer, on its wall end only, through the 0.26 in mount head,
+and nothing at the split joint — and a front-to-back run loses 0.0050547 in3, the
+integral of the triangle through the hook connector's 0.198 in rib and 0.141 in
+neck rather than through the body. Every separator still comes out one body with
+no notices.
 
 Still not modelled, none of it dimensioned:
 

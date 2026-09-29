@@ -132,24 +132,40 @@ Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
 | Edge mount hollow interior (accepts the T head) | **0.29 in** |
 | Edge mount channel (the separator neck runs in it) | **0.166 in** |
 
-The thickness, web and rail-width figures above were re-measured in September
-2026 from an annotated photo of the OEM side-by-side divider (page 1 of the
-"stacktech organizer" note). They replace the earlier 0.265 / 0.095 / 0.25 in
-values. Two things on that page are **not** yet modelled, because only one page
-of the note is reachable without a login and the shape could not be verified in
-CAD:
+### September 2026 re-measure, and which OEM part maps to which
 
-- a **0.23 x 0.23 in chamfer** on one corner of the divider. The photo shows it
-  on the bottom-right corner only; the other three read as square, which would
-  make it a keying feature rather than a clearance cut. A freehand profile
-  sketch on the same page shows a much shallower ramp than 45 degrees, so the
-  0.23 x 0.23 reading needs confirming before it is cut.
-- two short **grip/stiffening ribs** on the face near the top edge, a moulded
-  ToughBuilt logo boss, and a small centred **tab on the bottom edge** — all
-  visible but none dimensioned.
+The figures above were re-measured in September 2026 from the annotated
+"stacktech organizer" note. **The OEM part names are the reverse of this
+feature's.** The OEM "side by side" divider is the short one that plugs in; the
+OEM "front to back" divider is the long slotted bar. This feature builds the
+long slotted bar as its side-to-side separator and the short runs as its
+front-to-back separators. Per the note's author, the intent is to build a long
+side-to-side bar *using the cross-section of the OEM small side-by-side part*,
+and the front-to-back runs using the OEM long part's — so the numbers map to
+this feature's names, not to the OEM parts:
 
-The front-to-back divider's revised dimensions are on a second page of the same
-note, which is behind Notability's login and has not been read.
+| | Note page | Feature part | Thickest | Web | Rail |
+| --- | --- | --- | --- | --- | --- |
+| OEM small divider | 1, "Side x Side" | side-to-side separator | 0.26 in | 0.09 in | 0.12 in |
+| OEM long divider | 2, "Front to back" | front-to-back separators | 0.198 in | 0.09 in | 0.12 in |
+
+The front-to-back separator is therefore a thinner plate than the side-to-side
+bar and now has its own thickness parameter. Its wall-end section is capped to
+that plate, so at 0.198 in the whole part comes out one uniform thickness rather
+than locally thinned — the note's author asked for exactly that simplification.
+
+Both pages dimension a **0.23 x 0.23 in chamfer** on a bottom corner (page 1
+bottom-right, page 2 bottom-left), so it is modelled on both bottom corners of
+every separator, with a parameter that zeroes it.
+
+Still not modelled, none of it dimensioned:
+
+- page 2's **0.42 in outer protrusion** that runs inside the slotting part. The
+  note's author said it need not be exact and that one uniform thickness is
+  fine, which is what is built.
+- page 1's two short **grip/stiffening ribs** near the top edge, the moulded
+  ToughBuilt logo boss, and the small centred **tab on the bottom edge**.
+- page 2's ".3175 to thick section", which could not be tied to a feature.
 
 Measured from the OEM front-to-back (large) divider's wall connector:
 

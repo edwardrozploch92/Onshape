@@ -28,6 +28,9 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *     wanted, at the cost of standing out from the faces. Either way the mating
  *     part carries a full-height tongue the thickness of the web, and assembled
  *     length, height and slot positions are unchanged.
+ *   - both dividers carry a 0.23" x 0.23" chamfer on their bottom corners
+ *   - the front-to-back separator is a thinner plate than the side-to-side bar,
+ *     0.198" against 0.26", and is modelled at that one uniform thickness
  *   - separator-to-separator joint: a 0.09" tongue into the 0.095" T-slot in
  *     the mating separator, stopping at that separator's mid-plane so a
  *     front-to-back run in the facing cell can enter the same slot from the
@@ -147,6 +150,8 @@ const FB_END_THICKNESS_BOUNDS = { (meter) : [0.000508, 0.005334, 0.0127], (milli
 const FB_RIDGE_GAP_BOUNDS = { (meter) : [0.000508, 0.0038735, 0.0127], (millimeter) : 3.8735, (centimeter) : 0.38735, (inch) : 0.1525, (foot) : 0.01271, (yard) : 0.00424 } as LengthBoundSpec;
 const FB_RIDGE_WIDTH_BOUNDS = { (meter) : [0.000254, 0.001524, 0.0127], (millimeter) : 1.524, (centimeter) : 0.1524, (inch) : 0.06, (foot) : 0.005, (yard) : 0.00167 } as LengthBoundSpec;
 const FB_END_LENGTH_BOUNDS = { (meter) : [0, 0.00889, 0.0762], (millimeter) : 8.89, (centimeter) : 0.889, (inch) : 0.35, (foot) : 0.02917, (yard) : 0.00972 } as LengthBoundSpec;
+const FB_THICKNESS_BOUNDS = { (meter) : [0.000508, 0.0050292, 0.0127], (millimeter) : 5.0292, (centimeter) : 0.50292, (inch) : 0.198, (foot) : 0.0165, (yard) : 0.0055 } as LengthBoundSpec;
+const CHAMFER_BOUNDS = { (meter) : [0, 0.005842, 0.0254], (millimeter) : 5.842, (centimeter) : 0.5842, (inch) : 0.23, (foot) : 0.0191667, (yard) : 0.0063889 } as LengthBoundSpec;
 const FB_CHANNEL_DEPTH_BOUNDS = { (meter) : [0.000508, 0.00381, 0.0127], (millimeter) : 3.81, (centimeter) : 0.381, (inch) : 0.15, (foot) : 0.0125, (yard) : 0.00417 } as LengthBoundSpec;
 // Printing limit and the sliding joint that splits the side-to-side separator.
 const MAX_PRINT_BOUNDS = { (meter) : [0.05, 0.256, 2], (millimeter) : 256, (centimeter) : 25.6, (inch) : 10.07874, (foot) : 0.8399, (yard) : 0.27997 } as LengthBoundSpec;
@@ -240,6 +245,12 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             annotation { "Name" : "Clearance at each wall" }
             isLength(definition.endClearance, END_CLEARANCE_BOUNDS);
 
+            annotation { "Name" : "Front-to-back: separator thickness" }
+            isLength(definition.fbThickness, FB_THICKNESS_BOUNDS);
+
+            annotation { "Name" : "Bottom corner chamfer (0 = none)" }
+            isLength(definition.cornerChamfer, CHAMFER_BOUNDS);
+
             annotation { "Name" : "Front-to-back: wall mount bump-out from the wall" }
             isLength(definition.fbBumpOut, FB_BUMP_OUT_BOUNDS);
 
@@ -312,6 +323,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         // the neck spans the ridge-to-rib gap, and the rib runs the full depth of
         // the mount's channel (measured, so it may reach slightly past the wall plane).
         const ec = definition.endClearance;
+        const fbT = definition.fbThickness;
         const fbRibDepth = definition.fbChannelDepth;
         const fbWallLen = definition.fbBumpOut + definition.fbRidgeWidth + definition.fbEndLength;
 
@@ -337,12 +349,18 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             // the mating tongue starts just above this floor.
             "slotFloor" : max(definition.railWidth, 0.1 * inch),
             "clearance" : c,
-            "fbEndThickness" : min(definition.fbEndThickness, T),
+            "cornerChamfer" : definition.cornerChamfer,
+            // The front-to-back separator is its own, thinner plate. Its wall-end
+            // section is capped to that, so at the measured 0.198 in the whole part
+            // comes out one uniform thickness rather than locally thinned.
+            "fbEndThickness" : min(definition.fbEndThickness, fbT),
             "fbEndLength" : definition.fbEndLength,
             "fbRidgeWidth" : definition.fbRidgeWidth,
             "fbRidgeGap" : definition.fbRidgeGap,
             "fbRibDepth" : fbRibDepth,
-            "fbRibThickness" : min(definition.fbEndThickness, wallHeadT),
+            // Capped to the front-to-back plate as well, so the rib never stands
+            // proud of the part it grows out of.
+            "fbRibThickness" : min(min(definition.fbEndThickness, fbT), wallHeadT),
             // Tongue-and-groove joint that splits the side-to-side separator for
             // printing. The tongue is the thickness of the web. The groove is
             // either cut back into the bar (FLUSH) or built out of it as the gap
@@ -502,6 +520,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             for (var j = 1; j <= count; j += 1)
             {
                 createSeparator(context, id + ("fb" ~ j), mergeMaps(common, {
+                    "thickness" : fbT,
                     "origin" : vector(j * colPitch, yStart, zero),
                     "uDir" : vector(0, 1, 0),
                     "vDir" : vector(1, 0, 0),
@@ -533,6 +552,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         "clearance" : 0.0125 * inch,
         "topClearance" : 0.157 * inch,
         "endClearance" : 0.02 * inch,
+        "fbThickness" : 0.198 * inch,
+        "cornerChamfer" : 0.23 * inch,
         "fbBumpOut" : 0.285 * inch,
         "fbEndThickness" : 0.21 * inch,
         "fbRidgeGap" : 0.1525 * inch,
@@ -613,6 +634,7 @@ function splitPosition(slotXs is array, xLow, xHigh, jointDepth, halfSlot, margi
  *   p.leftEnd / p.rightEnd              : END_NONE, END_WALL, END_HOOK, END_SLOT, END_TONGUE or END_GROOVE
  *   p.grooveEnd                         : -1 / +1 to cut a flush-style groove into that end
  *   p.faceSlots                         : u positions of T-slots cut through this separator
+ *   p.cornerChamfer                     : 45 degree cut on both bottom corners (0 = none)
  */
 function createSeparator(context is Context, id is Id, p is map)
 {
@@ -692,10 +714,58 @@ function createSeparator(context is Context, id is Id, p is map)
         });
     }
 
+    // Bottom corner chamfers. Both the OEM side-by-side and front-to-back
+    // dividers carry a 45 degree cut of the same size on their lower corners.
+    if (p.cornerChamfer > zero && p.cornerChamfer < min(L, h) / 2)
+    {
+        cornerChamferCut(context, id + "chamL", p, zero, 1, 1, p.cornerChamfer);
+        cornerChamferCut(context, id + "chamR", p, L, -1, 1, p.cornerChamfer);
+        opBoolean(context, id + "chamfers", {
+            "tools" : qUnion([qCreatedBy(id + "chamL", EntityType.BODY), qCreatedBy(id + "chamR", EntityType.BODY)]),
+            "targets" : bodyQuery,
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+    }
+
     setProperty(context, {
         "entities" : bodyQuery,
         "propertyType" : PropertyType.NAME,
         "value" : p.name
+    });
+}
+
+/**
+ * Right-angled triangular prism for chamfering a corner, cut through the whole
+ * thickness of the separator. The right angle sits at (uCorner, z = 0); the legs
+ * run `leg` along u in the `uSign` direction and `leg` up z in the `zSign` one,
+ * so the hypotenuse is the 45 degree chamfer face.
+ */
+function cornerChamferCut(context is Context, id is Id, p is map, uCorner, uSign is number, zSign is number, leg)
+{
+    const zero = 0 * inch;
+    const eps = 0.02 * inch;
+    const T = p.thickness;
+    const normal = cross(p.uDir, p.zDir);
+    // Start a whisker outside one face and cut back through both.
+    const origin = p.origin + uCorner * p.uDir - (T / 2 + eps) * normal;
+    const sketch = newSketchOnPlane(context, id + "sketch", {
+        "sketchPlane" : plane(origin, normal, p.uDir)
+    });
+    skPolyline(sketch, "triangle", { "points" : [
+        vector(zero, zero),
+        vector(uSign * leg, zero),
+        vector(zero, zSign * leg),
+        vector(zero, zero)
+    ] });
+    skSolve(sketch);
+    opExtrude(context, id, {
+        "entities" : qSketchRegion(id + "sketch"),
+        "direction" : normal,
+        "endBound" : BoundingType.BLIND,
+        "endDepth" : T + 2 * eps
+    });
+    opDeleteBodies(context, id + "deleteSketch", {
+        "entities" : qCreatedBy(id + "sketch", EntityType.BODY)
     });
 }
 

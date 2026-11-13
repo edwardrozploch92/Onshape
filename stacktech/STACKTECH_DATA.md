@@ -191,11 +191,11 @@ What changed in the feature to carry this:
   two split-joint dimensions. Thicknesses, mount sizes, rail width, the chamfer
   and the front-to-back hook dimensions are no longer parameters.
 
-Verification. The Onshape connector was not authorised when this was written,
-so **the new code has not been run in Onshape**. It was checked offline
-instead: the construction was repeated step for step in OpenCascade, reading
-`SS_EDGE` and `FB_EDGE` out of the `.fs` file, and compared solid-for-solid with
-the two STEP samples.
+Verification, in two steps.
+
+First, offline: the construction was repeated step for step in OpenCascade,
+reading `SS_EDGE` and `FB_EDGE` out of the `.fs` file, and compared
+solid-for-solid with the two STEP samples.
 
 | | Sample | Rebuilt | Rebuilt but not in sample | In sample but not rebuilt |
 |---|---|---|---|---|
@@ -208,6 +208,29 @@ not have. The same rebuild then laid out every drawer in section 1, split and
 unsplit, with a front-wall and a back-wall run in every column: every part came
 out a single valid solid, no two parts overlap, and each split pair spans the
 same width as the one-piece bar.
+
+Then in Onshape, on 2026-11-13 (FeatureScript library 3112, file still pinned
+at 3070): eight configurations built through the feature itself, with no
+errors or notices, each yielding the expected number of parts, and every
+part's volume compared with the offline rebuild of the same configuration.
+
+| Configuration | Parts | Largest difference from offline |
+|---|---|---|
+| D-30-1 side to side, one piece | 1 | 6.3e-6 in3 |
+| same, fillets off | 1 | 5e-15 in3 |
+| D-30-1 side to side, split proud | 2 | 1.6e-6 in3 |
+| D-30-1 side to side, split flush | 2 | 1.3e-6 in3 |
+| D-30-1 front wall to slot 1, two runs | 2 | 5.3e-7 in3 |
+| same, one run, fillets off | 1 | 9e-15 in3 |
+| D-74 both, slot 1 to back wall, three runs | 5 | 1.6e-6 in3 |
+| R91 both, slot 1 to slot 2, five runs | 9 | 1.8e-6 in3 |
+
+With fillets off Onshape and the offline rebuild agree to rounding, so the two
+build the same solid; with fillets on they differ by under 1e-5 in3, which is
+how each kernel represents the fillet surfaces. Onshape's parts are therefore
+the STEP samples' edges to within the same few millionths of a cubic inch.
+The new feature was written to Feature Studio 1 the same day.
+
 
 ### Measured OEM separator and edge-mount geometry
 

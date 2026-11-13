@@ -31,10 +31,13 @@ Coordinate convention used throughout (and in the FeatureScript):
 | Item | Value | Source |
 |---|---|---|
 | Exterior | 533 × 406 × 395 mm (same housing as the XL 3-drawer) | [official] Elsons / PrimeTools |
-| Interior W × D | assumed same as D-70-3: **383.5 × 330 mm** | [estimate] same housing & slide package |
+| Interior W × D | assumed same as D-70-3: **383.5 × 330 mm** (superseded by the measured separator sizes below) | [estimate] same housing & slide package |
 | Interior H (each drawer) | **≈ 135 mm** (two equal drawers sharing the D-71's 285 mm cavity, ~9 mm frame between) | [estimate] |
 | Dividers included | 2 large + 6 small per drawer (16 total) | [official] |
 | Stock layout | 3 columns × 3 rows per drawer | [photo] |
+| **Separator height** | **4 7/8 in** (all separators) | [owner] 2026-11 |
+| **Side-to-side separator** | **15 1/4 in** tip to tip, one T-slot at its centre | [owner] 2026-11 |
+| **Front to back** | **13 1/8 in**, two side-wall mounts each side at 4 3/8 in spacing | [owner] 2026-11 |
 
 ### 3-drawer – XL 3-Drawer Tool Box, TB-B1-D-70-3
 
@@ -51,10 +54,13 @@ Coordinate convention used throughout (and in the FeatureScript):
 | Item | Value | Source |
 |---|---|---|
 | Exterior | 20.98 × 15.98 × 15.55 in (533 × 406 × 395 mm) | [official] Lowe's / Elsons |
-| Interior W × D | assumed same as D-70-3: **383.5 × 330 mm** | [estimate] |
+| Interior W × D | assumed same as D-70-3: **383.5 × 330 mm** (superseded by the measured separator sizes below) | [estimate] |
 | Interior H (each drawer) | **≈ 64 mm (≈ 2.5 in)** – four equal drawers in the 285 mm cavity | [estimate] |
 | Dividers included | 3 large + 8 small per drawer (44 total) | [official] |
-| Stock layout | **4 columns × 3 rows** per drawer | [photo] |
+| Stock layout | **4 columns × 3 rows** per drawer (stock; the feature now uses the owner's layout below) | [photo] |
+| **Separator height** | **2 1/4 in** (all separators) | [owner] 2026-11 |
+| **Side-to-side separator** | **15 1/4 in** tip to tip, five T-slots evenly spaced | [owner] 2026-11 |
+| **Front to back** | **13 in**, three side-wall mounts each side, evenly spaced (3 1/4 in) | [owner] 2026-11 |
 
 ### Large single – XL 1-Drawer Locking Box, TB-B1-D-71 (deep drawer)
 
@@ -171,10 +177,11 @@ off.
 
 What changed in the feature to carry this:
 
-- **Heights are fixed** at 3.2565 in and 2.3642 in, where they used to follow
-  the drawer's interior height. The side-to-side separator is therefore taller
-  than the D-74 drawer's listed 64 mm interior, which is an estimate (section
-  1); the feature reports that as a notice instead of refusing to build.
+- **Heights default to the samples'**, 3.2565 in and 2.3642 in, where they used
+  to follow the drawer's interior height. A drawer measured for the feature
+  overrides that with its own separator height (see below). The feature reports
+  a separator taller than the drawer's listed interior as a notice rather than
+  refusing to build.
 - **The wall ends are part of the bar**, not connectors added to it. A
   separator is one full-thickness block from tip to tip, cut back to the web
   everywhere that is not a rail. The first end sits one wall clearance (0.02 in)
@@ -190,6 +197,41 @@ What changed in the feature to carry this:
   wall clearance, fit clearance, T-slot interior, print length limit and the
   two split-joint dimensions. Thicknesses, mount sizes, rail width, the chamfer
   and the front-to-back hook dimensions are no longer parameters.
+
+Per-drawer sizes measured by the owner (2026-11-13). Two drawers now carry
+their own separator height and side-to-side length in `drawerSpec()`, given as
+`separatorHeight` and `sideToSideLength`:
+
+| Drawer | Height (all parts) | Side to side, tip to tip | Front to back | Side-wall mounts | T-slots in the side-to-side bar |
+|---|---|---|---|---|---|
+| D-72 (XL 2-drawer) | 4 7/8 in | 15 1/4 in | 13 1/8 in | 2 per side, at 4 3/8 and 8 3/4 in | 1, at the centre |
+| D-74 (XL 4-drawer) | 2 1/4 in | 15 1/4 in | 13 in | 3 per side, at 3 1/4, 6 1/2 and 9 3/4 in | 5, 2.548 in apart |
+
+How the feature reads them:
+
+- The side-to-side length is the part itself, tip to tip, whatever the wall
+  clearance; the drawer's width becomes that plus the clearance at each end.
+  The front-to-back figure is the drawer's depth, wall to wall: 13 1/8 in in
+  three equal 4 3/8 in bays is exactly the spacing given for the D-72.
+- Mounts and slots are evenly spaced from each other and from the walls, as
+  instructed where no spacing was given.
+- One height applies to every separator in the drawer, side to side and front
+  to back.
+- Every edge feature keeps its size. Only the plain web and the uprights grow
+  or shrink. The one feature whose *shape* follows the height is the
+  front-to-back rib's taper: it still runs from 0.2025 in under the diagonal to
+  0.159 in at the chamfer, so on a taller part it tapers more gently.
+- The D-72's "connectors at 7 7/8 on center" is read as a single T-slot at the
+  centre of the bar. The centre of a 15 1/4 in bar is 7 5/8 in from each tip
+  (7.645 in from each wall), not 7 7/8 in. "Override front-to-back positions"
+  gives a different count.
+
+Checked in Onshape on 2026-11-13. Both drawers build without errors or
+notices: the side-to-side bar comes out at 15.250 in by 4.875 in (D-72) and
+15.250 in by 2.25 in (D-74), its split parts at 187.8 mm and 224.6 mm in both,
+mounts and slots where the table puts them, and the D-30-1 parts unchanged
+to the last digit. An offline rebuild of every configuration on both drawers
+found every part a single valid solid, with no two overlapping.
 
 Verification, in two steps.
 
@@ -350,7 +392,7 @@ printable parts" to false to get the one-piece bar back.
 | Wall thickness | fixed at 0.069 in by the bar | free, 0.15 in by default |
 | Joint across the faces | 0.268 in, flat both sides | 0.43 in, stands 0.081 in out per face |
 | Printing | flat on both sides | needs support, or a thinner wall |
-| Part 1 printed length (D-74) | 185.7 mm | 185.4 mm |
+| Part 1 printed length (D-74) | 188.2 mm | 187.8 mm |
 
 Two dimensions drive both styles. "Slot depth" is how far the tongue engages,
 1 in by default, and sets the groove depth in either style. "Protruding sleeve
@@ -360,7 +402,7 @@ flush with the faces, and anything above that stands out by the difference.
 The joint plane, and the channel that runs back from it, have to clear every
 front-to-back T-slot by the end-rail width (0.157 in), so the split lands in
 whichever gap between neighbouring slots is nearest the middle of the bar. On
-the D-74, D-71 and the rolling boxes the bar's exact midpoint *is* a slot, so
+the D-72, D-74, D-71 and the rolling boxes the bar's exact midpoint *is* a slot, so
 the joint shifts to one side and the two parts come out unequal. Printed
 lengths at the default 1 in engagement depth, from the offline rebuild of the
 November edge geometry (proud style; flush makes part 1 one clearance, 0.3 mm,
@@ -368,8 +410,9 @@ longer):
 
 | Drawer | One piece | Part 1 (groove) | Part 2 (tongue) |
 | --- | --- | --- | --- |
-| D-30-1, D-72, D-70-3 | 382.5 mm | 190.9 mm | 216.6 mm |
-| D-74, D-71 | 382.5 mm | 185.4 mm | 222.2 mm |
+| D-30-1, D-70-3 | 382.5 mm | 190.9 mm | 216.6 mm |
+| D-72, D-74 (measured, 15 1/4 in bar) | 387.35 mm | 187.8 mm | 224.6 mm |
+| D-71 | 382.5 mm | 185.4 mm | 222.2 mm |
 | R91, R92 (both drawers) | 429.0 mm | 208.7 mm | 245.4 mm |
 
 In both styles the groove is web + 2 x clearance wide (0.13 in) and runs the

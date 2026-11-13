@@ -38,13 +38,14 @@ locally (see Setup below).
   section at the splice; slot depth and sleeve wall thickness are adjustable.
   The end of each bar is a fixed design taken from two STEP samples and held in
   `SS_EDGE` and `FB_EDGE` at the top of the file: the side-to-side bar is
-  3.2565 in tall and 0.268 in through its rails, with a head, neck and rail at
-  each wall end; the front-to-back bar is 2.3642 in tall and 0.42 in through
-  its rails, with a set-back rail and a tapered rib at its wall end. Both have
-  a 0.105 in web and a chamfered bottom corner at each wall end. Only the plain
-  span between the ends changes with the drawer. Every drawer's interior size
-  and receiver count is a single hard-coded table (`drawerSpec()`) at the top
-  of the file.
+  0.268 in through its rails, with a head, neck and rail at each wall end; the
+  front-to-back bar is 0.42 in through its rails, with a set-back rail and a
+  tapered rib at its wall end. Both have a 0.105 in web and a chamfered bottom
+  corner at each wall end. The edges never change size; the drawer sets the
+  plain span between them and, for the measured XL 2- and 4-drawer boxes, the
+  height (4 7/8 in and 2 1/4 in, with a 15 1/4 in side-to-side bar). Every
+  drawer's size, receiver count and any measured separator size is a single
+  hard-coded table (`drawerSpec()`) at the top of the file.
 - `stacktech/STACKTECH_DATA.md` – interior dimensions, receiver counts and
   existing CAD/STL links for every StackTech drawer and box, with sources and
   confidence tags.

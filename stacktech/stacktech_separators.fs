@@ -13,9 +13,13 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  * The end of each separator is a fixed design, taken from two STEP samples
  * (Side to Side Edge Geometry and Front to Back Geometry, 2026-11) and held in
  * SS_EDGE and FB_EDGE below. Nothing in either edge depends on the drawer: the
- * drawer only sets how long the plain span between the ends is.
+ * drawer sets how long the plain span between the ends is and, where it lists
+ * a measured separator height, how tall the plain web is. Every rail, neck,
+ * hook, rib and chamfer keeps its size; a taller or shorter part only
+ * lengthens or shortens the web and the uprights between them.
  *
- * Side-to-side separator, 3.2565" tall and 0.268" thick over a 0.105" web:
+ * Side-to-side separator, 3.2565" tall in the sample and 0.268" thick over a
+ * 0.105" web:
  *   - a 0.25" rail along the top edge; the web runs out to the bottom edge
  *   - wall end, from the tip inward: a 0.06" head, a 0.105" neck at web
  *     thickness that the mount's channel wall slides up, and a 0.157" rail.
@@ -24,7 +28,8 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *   - a chamfer on the bottom corner of each wall end, 0.165" along the bar and
  *     0.236" up, taking the head and neck with it
  *
- * Front-to-back separator, 2.3642" tall and 0.42" thick over a 0.105" web:
+ * Front-to-back separator, 2.3642" tall in the sample and 0.42" thick over a
+ * 0.105" web:
  *   - a 0.125" rail along the top edge
  *   - wall end: the 0.125" end rail runs down the tip for 0.879", then steps
  *     back 0.5" along a diagonal and carries on down to the bottom edge. Below
@@ -105,23 +110,30 @@ export enum FrontToBackAnchor
 
 /**
  * Interior dimensions and receiver counts per drawer.
- *   width      : side to side
- *   depth      : front to back
- *   height     : floor to rim
- *   sideSlots  : female edge mounts on each side wall, counted front to back
- *   positions  : front-to-back divider positions across the width
- *                (2 for the stock 3-column grid, 3 for the 4-column grid)
+ *   width            : side to side
+ *   depth            : front to back
+ *   height           : floor to rim
+ *   sideSlots        : female edge mounts on each side wall, counted front to
+ *                      back, evenly spaced between the front and back walls
+ *   positions        : front-to-back divider positions across the width, which
+ *                      is also the number of T-slots in the side-to-side
+ *                      separator, evenly spaced between the side walls
+ * Drawers measured for this feature also list (2026-11):
+ *   sideToSideLength : the side-to-side separator tip to tip. Stands in for
+ *                      width, which becomes this plus a wall clearance each side
+ *   separatorHeight  : height of every separator in the drawer, in place of the
+ *                      STEP samples' own heights
  */
 function drawerSpec(drawer is StackTechDrawer) returns map
 {
     if (drawer == StackTechDrawer.D_30_1)
         return { "label" : "1-Drawer Tool Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 114 * millimeter, "sideSlots" : 2, "positions" : 2 };
     if (drawer == StackTechDrawer.D_72)
-        return { "label" : "XL 2-Drawer Locking Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 135 * millimeter, "sideSlots" : 2, "positions" : 2 };
+        return { "label" : "XL 2-Drawer Locking Box", "sideToSideLength" : 15.25 * inch, "depth" : 13.125 * inch, "height" : 135 * millimeter, "separatorHeight" : 4.875 * inch, "sideSlots" : 2, "positions" : 1 };
     if (drawer == StackTechDrawer.D_70_3)
         return { "label" : "XL 3-Drawer Tool Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 89 * millimeter, "sideSlots" : 2, "positions" : 2 };
     if (drawer == StackTechDrawer.D_74)
-        return { "label" : "XL 4-Drawer Locking Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 64 * millimeter, "sideSlots" : 2, "positions" : 3 };
+        return { "label" : "XL 4-Drawer Locking Box", "sideToSideLength" : 15.25 * inch, "depth" : 13 * inch, "height" : 64 * millimeter, "separatorHeight" : 2.25 * inch, "sideSlots" : 3, "positions" : 5 };
     if (drawer == StackTechDrawer.D_71)
         return { "label" : "XL 1-Drawer Locking Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 285 * millimeter, "sideSlots" : 3, "positions" : 5 };
     if (drawer == StackTechDrawer.D_R91)
@@ -299,8 +311,11 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         // Separator T-slot: the mating separator's tongue drops into a slot in this one.
         const slotWidth = definition.tSlotInterior + 2 * c;
 
+        // A measured side-to-side length fixes the separator tip to tip; the
+        // drawer is then that plus a wall clearance at each end.
+        const width = spec.sideToSideLength != undefined ? spec.sideToSideLength + 2 * ec : spec.width;
         const pitch = spec.depth / (spec.sideSlots + 1);
-        const colPitch = spec.width / (positions + 1);
+        const colPitch = width / (positions + 1);
 
         // Everything a separator needs besides its own edge geometry and placement.
         const shared = {
@@ -325,10 +340,24 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
                 "zDir" : vector(0, 0, 1),
                 "featureId" : id
             };
-        const ss = mergeMaps(shared, SS_EDGE);
-        const fb = mergeMaps(shared, FB_EDGE);
+        // A drawer measured for this feature sets the height of every separator
+        // in it; otherwise each keeps its STEP sample's height.
+        var ss = mergeMaps(shared, SS_EDGE);
+        var fb = mergeMaps(shared, FB_EDGE);
+        if (spec.separatorHeight != undefined)
+        {
+            ss.height = spec.separatorHeight;
+            fb.height = spec.separatorHeight;
+        }
 
-        // The edge geometry fixes each separator's height, whatever the drawer.
+        // The edges keep their size, so a part can only be made so short: the
+        // side-to-side neck has to close under the top rail clear of the
+        // chamfer, and the front-to-back diagonal has to land clear of its.
+        if (wantSS && ss.height - ss.topRail - ss.wallNeck / 2 <= ss.chamferRise)
+            throw regenError("The " ~ spec.label ~ " separator height is too short for the side-to-side edge geometry.");
+        if (wantFB && hookOuter(fb, fb.hookSetBack) <= fb.chamferRise)
+            throw regenError("The " ~ spec.label ~ " separator height is too short for the front-to-back edge geometry.");
+
         if ((wantSS && ss.height > spec.height) || (wantFB && fb.height > spec.height))
             reportFeatureInfo(context, id, "A separator is taller than the " ~ spec.label ~ " interior listed in drawerSpec().");
 
@@ -336,7 +365,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         {
             fCuboid(context, id + "envelope", {
                 "corner1" : vector(zero, zero, zero),
-                "corner2" : vector(spec.width, spec.depth, spec.height)
+                "corner2" : vector(width, spec.depth, spec.height)
             });
             setProperty(context, {
                 "entities" : qCreatedBy(id + "envelope", EntityType.BODY),
@@ -349,7 +378,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         {
             // Tip to tip: the wall ends are part of the bar, not added to it.
             const xStart = ec;
-            const xEnd = spec.width - ec;
+            const xEnd = width - ec;
             const wallLen = ss.wallHead + ss.wallNeck + ss.endRail;
             if (xEnd - xStart <= 2 * wallLen)
                 throw regenError("The drawer is too narrow for the side-to-side separator's two wall ends.", ["endClearance"]);

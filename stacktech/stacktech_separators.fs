@@ -123,13 +123,16 @@ export enum FrontToBackAnchor
  *                      width, which becomes this plus a wall clearance each side
  *   separatorHeight  : height of every separator in the drawer, in place of the
  *                      STEP samples' own heights
+ *   slotPitch        : centre-to-centre spacing of the T-slots, which are then
+ *                      grouped about the middle of the drawer instead of evenly
+ *                      spaced from the walls
  */
 function drawerSpec(drawer is StackTechDrawer) returns map
 {
     if (drawer == StackTechDrawer.D_30_1)
         return { "label" : "1-Drawer Tool Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 114 * millimeter, "sideSlots" : 2, "positions" : 2 };
     if (drawer == StackTechDrawer.D_72)
-        return { "label" : "XL 2-Drawer Locking Box", "sideToSideLength" : 15.25 * inch, "depth" : 13.125 * inch, "height" : 135 * millimeter, "separatorHeight" : 4.875 * inch, "sideSlots" : 2, "positions" : 1 };
+        return { "label" : "XL 2-Drawer Locking Box", "sideToSideLength" : 15.25 * inch, "depth" : 13.125 * inch, "height" : 135 * millimeter, "separatorHeight" : 4.875 * inch, "sideSlots" : 2, "positions" : 2, "slotPitch" : 7.875 * inch };
     if (drawer == StackTechDrawer.D_70_3)
         return { "label" : "XL 3-Drawer Tool Box", "width" : 383.5 * millimeter, "depth" : 330 * millimeter, "height" : 89 * millimeter, "sideSlots" : 2, "positions" : 2 };
     if (drawer == StackTechDrawer.D_74)
@@ -315,7 +318,15 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         // drawer is then that plus a wall clearance at each end.
         const width = spec.sideToSideLength != undefined ? spec.sideToSideLength + 2 * ec : spec.width;
         const pitch = spec.depth / (spec.sideSlots + 1);
-        const colPitch = width / (positions + 1);
+
+        // X of every front-to-back position, which is also every T-slot in the
+        // side-to-side separator: evenly spaced from the side walls, or, where
+        // the drawer gives a measured slot pitch, that far apart about the
+        // middle. Overriding the count goes back to even spacing.
+        const useSlotPitch = spec.slotPitch != undefined && !definition.overridePositions;
+        var slotXs = [];
+        for (var j = 1; j <= positions; j += 1)
+            slotXs = append(slotXs, useSlotPitch ? width / 2 + (j - (positions + 1) / 2) * spec.slotPitch : j * width / (positions + 1));
 
         // Everything a separator needs besides its own edge geometry and placement.
         const shared = {
@@ -383,10 +394,8 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             if (xEnd - xStart <= 2 * wallLen)
                 throw regenError("The drawer is too narrow for the side-to-side separator's two wall ends.", ["endClearance"]);
 
-            // Absolute X of every front-to-back T-slot in the bar.
-            var slotXs = [];
-            for (var j = 1; j <= positions; j += 1)
-                slotXs = append(slotXs, j * colPitch);
+            if (slotXs[0] - slotWidth / 2 <= xStart + wallLen || slotXs[positions - 1] + slotWidth / 2 >= xEnd - wallLen)
+                throw regenError("The T-slots run into the side-to-side separator's wall ends. Use fewer front-to-back positions.", ["positions"]);
 
             if (!definition.splitForPrinting)
             {
@@ -511,7 +520,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             for (var j = 1; j <= count; j += 1)
             {
                 createSeparator(context, id + ("fb" ~ j), mergeMaps(fb, {
-                    "origin" : vector(j * colPitch, yStart, zero),
+                    "origin" : vector(slotXs[j - 1], yStart, zero),
                     "uDir" : vector(0, 1, 0),
                     "vDir" : vector(1, 0, 0),
                     "bodyLength" : bodyLength,

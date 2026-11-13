@@ -8,7 +8,9 @@ import(path : "onshape/std/common.fs", version : "3070.0");
  *   - a full-width SIDE-TO-SIDE separator whose ends slide down over the
  *     female edge mounts on the drawer side walls, and
  *   - FRONT-TO-BACK separators that hook into the front or back wall mount and
- *     plug into vertical T-slots cut through the side-to-side separator.
+ *     plug into vertical T-slots cut through the side-to-side separator, or,
+ *     as a middle separator, span only the section between two neighbouring
+ *     side-to-side separators and tongue into both, with no wall ends.
  *
  * The end of each separator is a fixed design, taken from two STEP samples
  * (Side to Side Edge Geometry and Front to Back Geometry, 2026-11) and held in
@@ -105,7 +107,9 @@ export enum FrontToBackAnchor
     annotation { "Name" : "Side-to-side separator to the back wall" }
     FROM_BACK_WALL,
     annotation { "Name" : "Between two side-to-side separators" }
-    BETWEEN_SEPARATORS
+    BETWEEN_SEPARATORS,
+    annotation { "Name" : "Middle: between neighbouring side-to-side separators (no wall ends)" }
+    MIDDLE
 }
 
 /**
@@ -295,6 +299,9 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
         const wantSS = definition.kind != SeparatorKind.FRONT_TO_BACK;
         const wantFB = definition.kind != SeparatorKind.SIDE_TO_SIDE;
         const between = wantFB && definition.anchor == FrontToBackAnchor.BETWEEN_SEPARATORS;
+        // The middle separator spans only the section between the chosen
+        // side-to-side separator and the next one behind it, tongued into both.
+        const middle = wantFB && definition.anchor == FrontToBackAnchor.MIDDLE;
 
         var slots = [definition.sideSlot];
         if (between)
@@ -304,6 +311,12 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
             if (definition.secondSideSlot > spec.sideSlots)
                 throw regenError("The " ~ spec.label ~ " has only " ~ spec.sideSlots ~ " edge mounts per side wall.", ["secondSideSlot"]);
             slots = append(slots, definition.secondSideSlot);
+        }
+        else if (middle)
+        {
+            if (definition.sideSlot >= spec.sideSlots)
+                throw regenError("A middle separator runs from the chosen side-to-side slot to the next one behind it, and the " ~ spec.label ~ " has no slot behind slot " ~ definition.sideSlot ~ ". Choose a slot up to " ~ (spec.sideSlots - 1) ~ ".", ["sideSlot"]);
+            slots = append(slots, definition.sideSlot + 1);
         }
 
         const positions = definition.overridePositions ? definition.positions : spec.positions;
@@ -510,7 +523,7 @@ export const stackTechSeparators = defineFeature(function(context is Context, id
                 bodyLength = (slots[1] * pitch - ssFace) - yStart;
                 leftEnd = END_SLOT;
                 rightEnd = END_SLOT;
-                runLabel = "slot " ~ slots[0] ~ " to slot " ~ slots[1];
+                runLabel = (middle ? "middle, slot " : "slot ") ~ slots[0] ~ " to slot " ~ slots[1];
             }
             // Room for the wall end's set-back rail, an end rail at the other end,
             // and some web between them.

@@ -235,6 +235,17 @@ of the bar, between its two slots, giving parts of 193.4 mm and 219.1 mm; the
 D-74's, 187.8 mm and 224.6 mm. An offline rebuild of every configuration on both drawers
 found every part a single valid solid, with no two overlapping.
 
+Middle front-to-back separator (2026-11-13). "Front-to-back separators run"
+has a fourth choice, *Middle*: a separator spanning only the section between
+the chosen side-to-side separator and the next one behind it, with a T-slot
+tongue at both ends and no wall geometry (no hook, rib or chamfer). On the
+XL 2-drawer that is slot 1 to slot 2, 4 3/8 in between bar centres. It is the
+same part "Between two side-to-side separators" builds for neighbouring slots,
+without having to pick the second slot. A slot with nothing behind it is
+refused. Checked in Onshape: identical to the between-separators part to the
+last digit on the D-72, builds on the D-74 from slots 1 and 2, sits a fit
+clearance (0.0125 in) clear of both bars, and leaves the other parts unchanged.
+
 Verification, in two steps.
 
 First, offline: the construction was repeated step for step in OpenCascade,

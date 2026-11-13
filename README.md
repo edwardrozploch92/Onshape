@@ -31,7 +31,8 @@ locally (see Setup below).
   feature. Pick the ToughBuilt StackTech drawer, choose which side-wall
   receiver the full-width side-to-side bar sits in, and optionally add
   front-to-back bars that T into the front/back wall mount and drop into
-  T-slots in the side-to-side bar. The side-to-side bar is emitted as two
+  T-slots in the side-to-side bar, or "middle" bars that span only between
+  two neighbouring side-to-side bars and tongue into both. The side-to-side bar is emitted as two
   printable parts joined tongue and groove (assembled length unchanged), so
   each fits a 256 mm bed. The groove is either cut into one part, keeping both
   faces flat, or built out of it as a raised sleeve, keeping the bar's full

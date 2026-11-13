@@ -35,13 +35,16 @@ locally (see Setup below).
   printable parts joined tongue and groove (assembled length unchanged), so
   each fits a 256 mm bed. The groove is either cut into one part, keeping both
   faces flat, or built out of it as a raised sleeve, keeping the bar's full
-  section at the splice; slot depth and sleeve wall thickness are adjustable. Bars are modelled like the OEM parts: a
-  0.265 in frame with a 0.095 in recessed web, T ends on the side-to-side bar
-  sized to the 0.29 in / 0.166 in edge mount, and the OEM ridge-and-rib hook
-  (0.285 in bump-out, 0.21 in end section, 0.1525 in ridge-to-rib) on the
-  front-to-back bars' wall ends; all of those are defaults in the collapsed
-  "Separator geometry" group. Every drawer's interior size and receiver
-  count is a single hard-coded table (`drawerSpec()`) at the top of the file.
+  section at the splice; slot depth and sleeve wall thickness are adjustable.
+  The end of each bar is a fixed design taken from two STEP samples and held in
+  `SS_EDGE` and `FB_EDGE` at the top of the file: the side-to-side bar is
+  3.2565 in tall and 0.268 in through its rails, with a head, neck and rail at
+  each wall end; the front-to-back bar is 2.3642 in tall and 0.42 in through
+  its rails, with a set-back rail and a tapered rib at its wall end. Both have
+  a 0.105 in web and a chamfered bottom corner at each wall end. Only the plain
+  span between the ends changes with the drawer. Every drawer's interior size
+  and receiver count is a single hard-coded table (`drawerSpec()`) at the top
+  of the file.
 - `stacktech/STACKTECH_DATA.md` – interior dimensions, receiver counts and
   existing CAD/STL links for every StackTech drawer and box, with sources and
   confidence tags.

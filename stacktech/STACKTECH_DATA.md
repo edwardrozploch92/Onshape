@@ -118,7 +118,100 @@ The receivers on the walls are short vertical channels moulded proud of the wall
 hanging from the rim, with a rectangular window near the top (visible in the
 D-71 / R91 / D-72 photos).
 
+### Edge geometry as built (November 2026 STEP samples)
+
+**This is what `stacktech_separators.fs` builds.** The two subsections after
+this one record the earlier hand measurements and are kept as history; where
+they disagree with this one, this one wins.
+
+The end of each separator is a fixed design, taken from two STEP samples
+exported from Onshape on 2026-11-13, *Side to Side Edge Geometry* and *Front to
+Back Geometry*. Every number below is read off those solids and lives in
+`SS_EDGE` and `FB_EDGE` at the top of the feature. Nothing in either edge
+depends on the drawer. The drawer sets one thing only: how long the plain span
+between the ends is.
+
+Side-to-side separator. Lengths along the bar are measured in from the tip of a
+wall end.
+
+| Feature | Value |
+|---|---|
+| Height | **3.2565 in** |
+| Thickness through the rails | **0.268 in** |
+| Web | **0.105 in** |
+| Top rail height | **0.25 in** |
+| Bottom rail | none: the web runs out to the bottom edge |
+| Head at the tip | 0 to **0.06 in**, full thickness |
+| Neck, at web thickness | 0.06 to **0.165 in** (0.105 in wide) |
+| End rail | 0.165 to **0.322 in** (0.157 in wide), full thickness |
+| Top of the neck | closed by a full round, R 0.0525 in, its centre 0.25 in below the top edge, so 0.1975 in of solid cap sits on the mount |
+| Bottom of the neck | open through the bottom edge |
+| Bottom corner chamfer | **0.165 in** along the bar by **0.236 in** up the tip |
+
+Front-to-back separator, same convention.
+
+| Feature | Value |
+|---|---|
+| Height | **2.3642 in** |
+| Thickness through the rails | **0.42 in** |
+| Web | **0.105 in** |
+| Top rail height | **0.125 in** |
+| Bottom rail | none |
+| End rail, upper part | at the tip, 0 to **0.125 in**, running **0.879 in** down from the top edge |
+| Diagonal | from there down and back, falling **0.35 in** over a **0.5 in** set-back; 0.125 in wide square to its own direction |
+| End rail, lower part | 0.5 to **0.625 in**, from the diagonal to the bottom edge |
+| Under the diagonal | web, out to the tip |
+| Rib on that web | **0.21 in** thick, from **0.0725 in**; far face at **0.2025 in** under the diagonal tapering to **0.159 in** at the chamfer |
+| Bottom corner chamfer | **0.5 in** along the bar by **0.3 in** up the tip, trimming the web and the rib |
+
+Both samples break every edge of the outer faces with a **0.0075 in** fillet.
+The front-to-back sample also fillets one face of the rib and not the other;
+the feature reproduces that as drawn. "Fillet the outer edges" turns all of it
+off.
+
+What changed in the feature to carry this:
+
+- **Heights are fixed** at 3.2565 in and 2.3642 in, where they used to follow
+  the drawer's interior height. The side-to-side separator is therefore taller
+  than the D-74 drawer's listed 64 mm interior, which is an estimate (section
+  1); the feature reports that as a notice instead of refusing to build.
+- **The wall ends are part of the bar**, not connectors added to it. A
+  separator is one full-thickness block from tip to tip, cut back to the web
+  everywhere that is not a rail. The first end sits one wall clearance (0.02 in)
+  off the drawer wall, as before.
+- **The perimeter frame is gone.** There is a top rail and a rail at each end,
+  and no bottom rail. T-slots for the front-to-back runs therefore stop
+  **0.25 in** above the bottom edge (they used to stop at the 0.12 in bottom
+  rail), leaving 0.25 in of web holding the bar together under each slot.
+- **An interior end keeps an end rail** of the same width as the wall end's
+  (0.157 in side-to-side, 0.125 in front-to-back). The samples only show wall
+  ends, so this is carried over from the frame the parts had before.
+- **The "Separator geometry" parameter group is replaced by "Fit and joints"**:
+  wall clearance, fit clearance, T-slot interior, print length limit and the
+  two split-joint dimensions. Thicknesses, mount sizes, rail width, the chamfer
+  and the front-to-back hook dimensions are no longer parameters.
+
+Verification. The Onshape connector was not authorised when this was written,
+so **the new code has not been run in Onshape**. It was checked offline
+instead: the construction was repeated step for step in OpenCascade, reading
+`SS_EDGE` and `FB_EDGE` out of the `.fs` file, and compared solid-for-solid with
+the two STEP samples.
+
+| | Sample | Rebuilt | Rebuilt but not in sample | In sample but not rebuilt |
+|---|---|---|---|---|
+| Side to side | 0.754209 in3 | 0.754227 in3 | 0.000018 in3 | 0.000000 in3 |
+| Front to back | 0.590191 in3 | 0.590172 in3 | 0.000003 in3 | 0.000021 in3 |
+
+The residue is under 0.004 % of either sample. The side-to-side figure is the
+fillets the sample carries on its own sawn-off end, which a full-length bar does
+not have. The same rebuild then laid out every drawer in section 1, split and
+unsplit, with a front-wall and a back-wall run in every column: every part came
+out a single valid solid, no two parts overlap, and each split pair spans the
+same width as the one-piece bar.
+
 ### Measured OEM separator and edge-mount geometry
+
+*Superseded by the STEP edge geometry above; kept as the record of what was measured.*
 
 Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
 (these are the defaults in `stacktech_separators.fs`):
@@ -133,6 +226,9 @@ Measured from an OEM ToughBuilt divider and the drawer-wall edge mount
 | Edge mount channel (the separator neck runs in it) | **0.166 in** |
 
 ### September 2026 re-measure, and which OEM part maps to which
+
+*Superseded by the STEP edge geometry above, including the chamfer and the
+thicknesses. The OEM naming note still holds.*
 
 The figures above were re-measured in September 2026 from the annotated
 "stacktech organizer" note. **The OEM part names are the reverse of this
@@ -176,9 +272,9 @@ no notices.
 
 Still not modelled, none of it dimensioned:
 
-- page 2's **0.42 in outer protrusion** that runs inside the slotting part. The
-  note's author said it need not be exact and that one uniform thickness is
-  fine, which is what is built.
+- page 2's **0.42 in outer protrusion** that runs inside the slotting part was
+  not modelled at the time. It is now: 0.42 in is the front-to-back
+  separator's thickness through its rails in the November STEP sample.
 - page 1's two short **grip/stiffening ribs** near the top edge, the moulded
   ToughBuilt logo boss, and the small centred **tab on the bottom edge**.
 - page 2's ".3175 to thick section", which could not be tied to a feature.
@@ -217,7 +313,7 @@ default to 0.25 / 0.10 / 0.25 / 0.06 / 0.35 in.
 A one-piece side-to-side separator spans 382.5 mm in the 383.5 mm drawers and
 429.0 mm in the 430 mm rolling boxes, both well over a 256 mm print bed. The
 feature therefore builds it as two parts by default, joined tongue and groove.
-Part 2's end face carries a tongue the thickness of the web (0.095 in) running
+Part 2's end face carries a tongue the thickness of the web (0.105 in) running
 the full height of the bar. Assembled length, height and slot positions are
 identical to the one-piece bar. Set "Split the side-to-side separator into two
 printable parts" to false to get the one-piece bar back.
@@ -227,58 +323,60 @@ printable parts" to false to get the one-piece bar back.
 | | Flush | Proud |
 | --- | --- | --- |
 | Groove | cut back into the end face | gap between two walls added to it |
-| Bar at the splice | thinned to a 0.0725 in skin either side | keeps its full 0.265 in section |
-| Wall thickness | fixed at 0.0725 in by the bar | free, 0.15 in by default |
-| Joint across the faces | 0.265 in, flat both sides | 0.42 in, stands 0.0775 in out per face |
+| Bar at the splice | thinned to a 0.069 in skin either side | keeps its full 0.268 in section |
+| Wall thickness | fixed at 0.069 in by the bar | free, 0.15 in by default |
+| Joint across the faces | 0.268 in, flat both sides | 0.43 in, stands 0.081 in out per face |
 | Printing | flat on both sides | needs support, or a thinner wall |
-| Part 1 printed length (D-74) | 183.4 mm | 183.1 mm |
+| Part 1 printed length (D-74) | 185.7 mm | 185.4 mm |
 
 Two dimensions drive both styles. "Slot depth" is how far the tongue engages,
 1 in by default, and sets the groove depth in either style. "Protruding sleeve
-wall thickness" applies to the proud style only: at 0.0725 in the walls come out
+wall thickness" applies to the proud style only: at 0.069 in the walls come out
 flush with the faces, and anything above that stands out by the difference.
 
 The joint plane, and the channel that runs back from it, have to clear every
-front-to-back T-slot by the rail width, so the split lands in whichever gap
-between neighbouring slots is nearest the middle of the bar. On the D-74, D-71
-and the rolling boxes the bar's exact midpoint *is* a slot, so the joint shifts
-to one side and the two parts come out unequal. Measured results at the default
-1 in engagement depth:
+front-to-back T-slot by the end-rail width (0.157 in), so the split lands in
+whichever gap between neighbouring slots is nearest the middle of the bar. On
+the D-74, D-71 and the rolling boxes the bar's exact midpoint *is* a slot, so
+the joint shifts to one side and the two parts come out unequal. Printed
+lengths at the default 1 in engagement depth, from the offline rebuild of the
+November edge geometry (proud style; flush makes part 1 one clearance, 0.3 mm,
+longer):
 
-| Drawer | One piece | Part 1 (channel) | Part 2 (tongue) |
+| Drawer | One piece | Part 1 (groove) | Part 2 (tongue) |
 | --- | --- | --- | --- |
-| D-30-1, D-72, D-70-3 | 382.5 mm | 191.2 mm | 216.6 mm |
-| D-74, D-71 | 382.5 mm | 183.4 mm | 224.5 mm |
-| R91, R92 (both drawers) | 429.0 mm | 206.6 mm | 247.8 mm |
+| D-30-1, D-72, D-70-3 | 382.5 mm | 190.9 mm | 216.6 mm |
+| D-74, D-71 | 382.5 mm | 185.4 mm | 222.2 mm |
+| R91, R92 (both drawers) | 429.0 mm | 208.7 mm | 245.4 mm |
 
-In both styles the groove is web + 2 x clearance wide (0.12 in) and runs the
+In both styles the groove is web + 2 x clearance wide (0.13 in) and runs the
 full height of the end face, open top and bottom like any tongue-and-groove
-edge. Tongue thickness is 0.36 of the bar thickness, the usual tongue-and-groove
-proportion.
+edge. Tongue thickness is 0.39 of the bar thickness, a little over the usual
+third.
 
 Flush cuts that groove one clearance deeper than the tongue is long, so the
-tongue's shoulders — the 0.085 in of full-thickness material either side of it —
+tongue's shoulders — the 0.0815 in of full-thickness material either side of it —
 close against the mating end face rather than the tongue bottoming out. The
-grooved end keeps the recessed web back by slot depth + clearance + rail width,
-so the groove is surrounded by full-thickness material and its side walls merge
-into the web through a solid collar.
+grooved end keeps the recessed web back by slot depth + clearance + end-rail
+width, so the groove is surrounded by full-thickness material and its side walls
+merge into the web through a solid collar.
 
 Proud instead stops part 1's body at the seat face, a full slot depth short of
 the joint plane, and builds the two walls out from there. At the default 0.15 in
-they reach 0.21 in from the mid-plane against the bar's own 0.1325 in, so each
-stands 0.0775 in (1.97 mm) out and the joint measures 0.42 in across. Only
-0.0725 in of each wall's thickness is rooted on the bar's end face; the rest is
+they reach 0.215 in from the mid-plane against the bar's own 0.134 in, so each
+stands 0.081 in (2.06 mm) out and the joint measures 0.43 in across. Only
+0.069 in of each wall's thickness is rooted on the bar's end face; the rest is
 the part that stands out. The walls stop one clearance short of part 2's body,
 so what seats is the tongue's tip against part 1's end face — a solid
-full-section butt joint, 0.265 in by the full height.
+full-section butt joint, 0.268 in by the full height.
 
 Because the groove runs right through top and bottom in either style, the parts
 can slide apart vertically when loose; in the drawer they cannot, since each
-part's far end is T'd into a side-wall edge mount that holds it down.
+part's far end hangs on a side-wall edge mount that holds it down.
 
 Note the front-to-back separators are not split. Most runs are well inside
 256 mm, but a slot-1-to-back-wall run in the deep rolling boxes (R91,
-R92-bottom) reaches about 277 mm and would need splitting too.
+R92-bottom) reaches about 298 mm and would need splitting too.
 
 ### Published CAD files found
 
